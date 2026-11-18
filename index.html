@@ -256,6 +256,24 @@ FKeyPad.ReadOut.value = (parseFloat(FKeyPad.ReadOut.value) / 100) * parseFloat(A
         <button class="gg-btn danger" id="gg-reset">Reset Save</button>
         <label style="display:block;margin-top:6px;font-size:12px;"><input type="checkbox" id="gg-autosave" checked="checked" /> Autosave every 15s</label>
         <div id="gg-save-note"></div>
+        <div style="margin-top:10px;border-top:1px solid #333;padding-top:8px;">
+          <div style="font-weight:bold;color:#ffe27a;">IRC Chat <span style="font-weight:normal;color:#888;font-size:11px;">(Libera.Chat)</span></div>
+          <div class="gg-row" style="margin-top:6px;">
+            <label style="font-size:12px;">Username <input id="gg-nick" maxlength="16" style="width:110px;background:#111;color:#eee;border:1px solid #555;border-radius:4px;padding:3px 6px;" /></label>
+            <button class="gg-btn" id="gg-nick-rand" title="Random username">&#127922;</button>
+          </div>
+          <div class="gg-row" style="margin-top:6px;">
+            <label style="font-size:12px;">Channel <input id="gg-channel" value="#scratchpad-drawer" style="width:130px;background:#111;color:#eee;border:1px solid #555;border-radius:4px;padding:3px 6px;" /></label>
+            <button class="gg-btn" id="gg-irc-toggle">Connect</button>
+          </div>
+          <div id="gg-irc-status" style="font-size:12px;margin-top:6px;color:#888;">offline</div>
+          <div id="gg-irc-log" style="height:190px;overflow-y:auto;background:#101016;border:1px solid #333;border-radius:6px;padding:6px;margin-top:6px;font-size:12px;line-height:1.45;word-wrap:break-word;"></div>
+          <div class="gg-row" style="margin-top:6px;">
+            <input id="gg-irc-input" placeholder="Message...  (/join #x, /me, /nick, /msg)" style="flex:1;min-width:0;background:#111;color:#eee;border:1px solid #555;border-radius:4px;padding:5px 6px;" />
+            <button class="gg-btn" id="gg-irc-send">Send</button>
+          </div>
+          <label style="display:block;margin-top:6px;font-size:11px;color:#888;">Gateway (advanced, blank = default)<input id="gg-irc-gw" placeholder="default" style="width:100%;box-sizing:border-box;background:#111;color:#999;border:1px solid #444;border-radius:4px;padding:3px 6px;margin-top:2px;" /></label>
+        </div>
       </div>
       <div id="gg-pane-ach" style="display:none;margin-top:8px;"><div id="gg-ach-list"></div></div>
     </div>
@@ -406,6 +424,102 @@ FKeyPad.ReadOut.value = (parseFloat(FKeyPad.ReadOut.value) / 100) * parseFloat(A
   document.getElementById('gg-tab-settings').onclick=function(){var p=document.getElementById('gg-pane-settings');showPane(p.style.display==='block'?'game':'settings');};
   document.getElementById('gg-tab-ach').onclick=function(){var p=document.getElementById('gg-pane-ach');showPane(p.style.display==='block'?'game':'ach');};
   document.getElementById('gg-tab-game').onclick=function(){document.getElementById('gg-pane-settings').style.display='none';document.getElementById('gg-pane-ach').style.display='none';};
+  /* ---- IRC chat (via WS bridge at /scratchpad/irc/) ---- */
+  var IRC_KEY='gg_irc';
+  var ircPrefs={nick:'Guest'+Math.floor(1000+Math.random()*9000),channel:'#scratchpad-drawer',gw:''};
+  try{var _ip=JSON.parse(localStorage.getItem(IRC_KEY)||'null');if(_ip)ircPrefs=Object.assign(ircPrefs,_ip);}catch(e){}
+  function ircGw(){
+    var c=(document.getElementById('gg-irc-gw').value||'').trim();
+    if(c)return c;
+    if(/\.github\.io$/i.test(location.hostname))return 'wss://01m797aq07wd673t9fgaewrspg.vojk.siderusercontent.com/scratchpad/irc/';
+    return (location.protocol==='https:'?'wss://':'ws://')+location.host+'/scratchpad/irc/';
+  }
+  var ircWs=null,ircNickTries=0;
+  function ircEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function ircSave(){try{localStorage.setItem(IRC_KEY,JSON.stringify({nick:document.getElementById('gg-nick').value,channel:document.getElementById('gg-channel').value,gw:document.getElementById('gg-irc-gw').value}));}catch(e){}}
+  function ircLog(html,cls){var log=document.getElementById('gg-irc-log');if(!log)return;var d=document.createElement('div');if(cls)d.style.color=cls;if(cls==='sys')d.style.color='#888';if(cls==='me')d.style.color='#8fd';if(cls==='act')d.style.color='#da7';d.innerHTML=html;log.appendChild(d);while(log.children.length>300)log.removeChild(log.firstChild);log.scrollTop=log.scrollHeight;}
+  function ircStatus(txt,color){var el=document.getElementById('gg-irc-status');el.innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+color+';margin-right:4px;"></span>'+ircEsc(txt);}
+  function ircRaw(line){if(ircWs&&ircWs.readyState===1)ircWs.send(JSON.stringify({type:'send',line:line}));}
+  function ircHandle(line){
+    var m=line.match(/^(?::(\S+) )?(\S+)(.*)$/);if(!m)return;
+    var prefix=m[1]||'',cmd=m[2].toUpperCase(),rest=(m[3]||'').trim();
+    var nick=prefix.split('!')[0];
+    var trailing='',params=[];
+    var tm=rest.match(/ :(.*)$/);
+    if(tm){trailing=tm[1];params=rest.slice(0,tm.index).trim()?rest.slice(0,tm.index).trim().split(/\s+/):[];}
+    else if(rest){params=rest.split(/\s+/);}
+    if(cmd==='PING'){ircRaw('PONG :'+trailing);return;}
+    if(cmd==='433'||cmd==='436'){ircNickTries++;
+      if(ircNickTries<=3){var nn=(document.getElementById('gg-nick').value+'_').slice(0,16);document.getElementById('gg-nick').value=nn;ircSave();ircRaw('NICK '+nn);ircLog('Username in use, trying <b>'+ircEsc(nn)+'</b>...','sys');}
+      else{ircLog('Username rejected. Pick another and reconnect.','sys');ircDisconnect();}
+      return;}
+    if(cmd==='001'){var ch=document.getElementById('gg-channel').value.trim()||'#scratchpad-drawer';ircRaw('JOIN '+ch);ircStatus('online','#4c4');ircLog('Connected. Joining <b>'+ircEsc(ch)+'</b>...','sys');return;}
+    if(cmd==='PRIVMSG'){var tgt=params[0]||'';var me=document.getElementById('gg-nick').value;
+      var act=trailing.match(/^\u0001ACTION (.*)\u0001$/);
+      if(act){ircLog('* '+ircEsc(nick)+' '+ircEsc(act[1]),'act');}
+      else if(tgt.charAt(0)==='#'){ircLog('&lt;'+ircEsc(nick)+'&gt; '+ircEsc(trailing));}
+      else{ircLog('[dm from '+ircEsc(nick)+'] '+ircEsc(trailing),'me');}
+      return;}
+    if(cmd==='NOTICE'){ircLog('[notice] '+ircEsc(trailing||rest),'sys');return;}
+    if(cmd==='JOIN'){ircLog('--&gt; '+ircEsc(nick)+' joined '+ircEsc(trailing||params[0]||''),'sys');return;}
+    if(cmd==='PART'){ircLog('&lt;-- '+ircEsc(nick)+' left ('+ircEsc(trailing||'')+')','sys');return;}
+    if(cmd==='QUIT'){ircLog('&lt;-- '+ircEsc(nick)+' quit ('+ircEsc(trailing||'')+')','sys');return;}
+    if(cmd==='NICK'){ircLog('** '+ircEsc(nick)+' is now '+ircEsc(trailing),'sys');return;}
+    if(cmd==='353'){var names=trailing.split(/\s+/).filter(Boolean);ircLog(names.length+' users: '+ircEsc(names.slice(0,40).join(', '))+(names.length>40?'...':''),'sys');return;}
+    if(cmd==='332'){ircLog('Topic: '+ircEsc(trailing),'sys');return;}
+    if(cmd==='372'||cmd==='375'||cmd==='376'){ircLog(ircEsc(trailing),'sys');return;}
+  }
+  function ircDisconnect(){
+    try{if(ircWs&&ircWs.readyState===1)ircWs.send(JSON.stringify({type:'disconnect'}));}catch(e){}
+    try{if(ircWs)ircWs.close();}catch(e){}
+    ircWs=null;ircStatus('offline','#666');
+    var t=document.getElementById('gg-irc-toggle');if(t)t.textContent='Connect';
+  }
+  function ircConnect(){
+    if(ircWs&&ircWs.readyState===1){ircDisconnect();return;}
+    var nick=(document.getElementById('gg-nick').value||'').trim()||ircPrefs.nick;
+    document.getElementById('gg-nick').value=nick;ircSave();ircNickTries=0;
+    var ws;try{ws=new WebSocket(ircGw());}catch(e){ircLog('Bad gateway URL.','sys');return;}
+    ircWs=ws;
+    document.getElementById('gg-irc-toggle').textContent='Disconnect';
+    ircStatus('connecting...','#cc3');
+    ws.onopen=function(){try{ws.send(JSON.stringify({type:'connect',host:'irc.libera.chat',port:6697,tls:true,nick:nick}));}catch(e){}};
+    ws.onmessage=function(ev){var msg;try{msg=JSON.parse(ev.data);}catch(e){return;}
+      if(msg.type==='line')ircHandle(msg.line);
+      else if(msg.type==='status'){
+        if(msg.status==='connected-irc'){ircStatus('online','#4c4');}
+        if(msg.status==='disconnected'){ircStatus('offline','#666');ircLog('Disconnected.','sys');var t=document.getElementById('gg-irc-toggle');if(t)t.textContent='Connect';ircWs=null;}
+      }
+      else if(msg.type==='error'){ircLog('Error: '+ircEsc(msg.error||'unknown'),'sys');ircStatus('error','#c33');}};
+    ws.onerror=function(){ircLog('Connection failed. Bridge or network unreachable.','sys');ircStatus('error','#c33');};
+    ws.onclose=function(){ircWs=null;ircStatus('offline','#666');var t=document.getElementById('gg-irc-toggle');if(t)t.textContent='Connect';};
+  }
+  function ircSend(){
+    var inp=document.getElementById('gg-irc-input');var text=inp.value;if(!text||!text.trim())return;inp.value='';
+    if(!ircWs||ircWs.readyState!==1){ircLog('Not connected. Hit Connect first.','sys');return;}
+    var ch=document.getElementById('gg-channel').value.trim()||'#scratchpad-drawer';
+    var me=document.getElementById('gg-nick').value;
+    if(text.charAt(0)==='/'){var sp=text.slice(1).split(' ');var c=(sp[0]||'').toLowerCase();
+      if(c==='join'&&sp[1]){document.getElementById('gg-channel').value=sp[1];ircSave();ircRaw('JOIN '+sp[1]);ircLog('Joining '+ircEsc(sp[1])+'...','sys');return;}
+      if(c==='part'){ircRaw('PART '+ch+(sp[1]?' :'+sp.slice(1).join(' '):''));return;}
+      if(c==='nick'&&sp[1]){document.getElementById('gg-nick').value=sp[1].slice(0,16);ircSave();ircRaw('NICK '+sp[1]);return;}
+      if(c==='me'){var ab=text.slice(4);ircRaw('PRIVMSG '+ch+' :\u0001ACTION '+ab+'\u0001');ircLog('* '+ircEsc(me)+' '+ircEsc(ab),'act');return;}
+      if(c==='msg'&&sp[1]){var to=sp[1];var body=text.split(' ').slice(2).join(' ');ircRaw('PRIVMSG '+to+' :'+body);ircLog('[dm to '+ircEsc(to)+'] '+ircEsc(body),'me');return;}
+      if(c==='quit'){ircDisconnect();return;}
+      ircRaw(text.slice(1));return;}
+    ircRaw('PRIVMSG '+ch+' :'+text);
+    ircLog('&lt;'+ircEsc(me)+'&gt; '+ircEsc(text));
+  }
+  document.getElementById('gg-nick').value=ircPrefs.nick;
+  document.getElementById('gg-channel').value=ircPrefs.channel||'#scratchpad-drawer';
+  document.getElementById('gg-irc-gw').value=ircPrefs.gw||'';
+  document.getElementById('gg-irc-toggle').addEventListener('click',ircConnect);
+  document.getElementById('gg-irc-send').addEventListener('click',ircSend);
+  document.getElementById('gg-irc-input').addEventListener('keydown',function(e){if(e.key==='Enter')ircSend();});
+  document.getElementById('gg-nick-rand').addEventListener('click',function(){document.getElementById('gg-nick').value='Guest'+Math.floor(1000+Math.random()*9000);ircSave();});
+  document.getElementById('gg-nick').addEventListener('change',ircSave);
+  document.getElementById('gg-channel').addEventListener('change',ircSave);
+  ircStatus('offline','#666');
   render();
 })();
 </script>
