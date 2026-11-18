@@ -272,7 +272,8 @@ FKeyPad.ReadOut.value = (parseFloat(FKeyPad.ReadOut.value) / 100) * parseFloat(A
             <input id="gg-irc-input" placeholder="Message...  (/join #x, /me, /nick, /msg)" style="flex:1;min-width:0;background:#111;color:#eee;border:1px solid #555;border-radius:4px;padding:5px 6px;" />
             <button class="gg-btn" id="gg-irc-send">Send</button>
           </div>
-          <label style="display:block;margin-top:6px;font-size:11px;color:#888;">Gateway (advanced, blank = default)<input id="gg-irc-gw" placeholder="default" style="width:100%;box-sizing:border-box;background:#111;color:#999;border:1px solid #444;border-radius:4px;padding:3px 6px;margin-top:2px;" /></label>
+          <label style="display:block;margin-top:6px;font-size:11px;color:#888;">Gateway (advanced, blank = default — private Sider bridge needs owner login; external users see note on failure)<input id="gg-irc-gw" placeholder="default" style="width:100%;box-sizing:border-box;background:#111;color:#999;border:1px solid #444;border-radius:4px;padding:3px 6px;margin-top:2px;" /></label>
+          <div style="font-size:11px;color:#888;margin-top:4px;">External / GitHub Pages users: if Connect fails, join <b>#scratchpad-drawer</b> at <b>web.libera.chat</b> or any IRC app (irc.libera.chat:6697 TLS), or paste a public bridge URL above.</div>
         </div>
       </div>
       <div id="gg-pane-ach" style="display:none;margin-top:8px;"><div id="gg-ach-list"></div></div>
@@ -428,13 +429,15 @@ FKeyPad.ReadOut.value = (parseFloat(FKeyPad.ReadOut.value) / 100) * parseFloat(A
   var IRC_KEY='gg_irc';
   var ircPrefs={nick:'Guest'+Math.floor(1000+Math.random()*9000),channel:'#scratchpad-drawer',gw:''};
   try{var _ip=JSON.parse(localStorage.getItem(IRC_KEY)||'null');if(_ip)ircPrefs=Object.assign(ircPrefs,_ip);}catch(e){}
+  var DEFAULT_GW='wss://01m797aq07wd673t9fgaewrspg.vojk.siderusercontent.com/scratchpad/irc/';
+  function ircIsPrivateGw(url){ return /siderusercontent\.com/i.test(url||''); }
   function ircGw(){
     var c=(document.getElementById('gg-irc-gw').value||'').trim();
     if(c)return c;
-    if(/\.github\.io$/i.test(location.hostname))return 'wss://01m797aq07wd673t9fgaewrspg.vojk.siderusercontent.com/scratchpad/irc/';
+    if(/\.github\.io$/i.test(location.hostname))return DEFAULT_GW;
     return (location.protocol==='https:'?'wss://':'ws://')+location.host+'/scratchpad/irc/';
   }
-  var ircWs=null,ircNickTries=0;
+  var ircWs=null,ircNickTries=0,ircSaw001=false;
   function ircEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   function ircSave(){try{localStorage.setItem(IRC_KEY,JSON.stringify({nick:document.getElementById('gg-nick').value,channel:document.getElementById('gg-channel').value,gw:document.getElementById('gg-irc-gw').value}));}catch(e){}}
   function ircLog(html,cls){var log=document.getElementById('gg-irc-log');if(!log)return;var d=document.createElement('div');if(cls)d.style.color=cls;if(cls==='sys')d.style.color='#888';if(cls==='me')d.style.color='#8fd';if(cls==='act')d.style.color='#da7';d.innerHTML=html;log.appendChild(d);while(log.children.length>300)log.removeChild(log.firstChild);log.scrollTop=log.scrollHeight;}
@@ -453,7 +456,7 @@ FKeyPad.ReadOut.value = (parseFloat(FKeyPad.ReadOut.value) / 100) * parseFloat(A
       if(ircNickTries<=3){var nn=(document.getElementById('gg-nick').value+'_').slice(0,16);document.getElementById('gg-nick').value=nn;ircSave();ircRaw('NICK '+nn);ircLog('Username in use, trying <b>'+ircEsc(nn)+'</b>...','sys');}
       else{ircLog('Username rejected. Pick another and reconnect.','sys');ircDisconnect();}
       return;}
-    if(cmd==='001'){var ch=document.getElementById('gg-channel').value.trim()||'#scratchpad-drawer';ircRaw('JOIN '+ch);ircStatus('online','#4c4');ircLog('Connected. Joining <b>'+ircEsc(ch)+'</b>...','sys');return;}
+    if(cmd==='001'){ircSaw001=true;var ch=document.getElementById('gg-channel').value.trim()||'#scratchpad-drawer';ircRaw('JOIN '+ch);ircStatus('online','#4c4');ircLog('Connected. Joining <b>'+ircEsc(ch)+'</b>...','sys');return;}
     if(cmd==='PRIVMSG'){var tgt=params[0]||'';var me=document.getElementById('gg-nick').value;
       var act=trailing.match(/^\u0001ACTION (.*)\u0001$/);
       if(act){ircLog('* '+ircEsc(nick)+' '+ircEsc(act[1]),'act');}
@@ -478,8 +481,9 @@ FKeyPad.ReadOut.value = (parseFloat(FKeyPad.ReadOut.value) / 100) * parseFloat(A
   function ircConnect(){
     if(ircWs&&ircWs.readyState===1){ircDisconnect();return;}
     var nick=(document.getElementById('gg-nick').value||'').trim()||ircPrefs.nick;
-    document.getElementById('gg-nick').value=nick;ircSave();ircNickTries=0;
-    var ws;try{ws=new WebSocket(ircGw());}catch(e){ircLog('Bad gateway URL.','sys');return;}
+    document.getElementById('gg-nick').value=nick;ircSave();ircNickTries=0;ircSaw001=false;
+    var gwUsed=ircGw();
+    var ws;try{ws=new WebSocket(gwUsed);}catch(e){ircLog('Bad gateway URL.','sys');return;}
     ircWs=ws;
     document.getElementById('gg-irc-toggle').textContent='Disconnect';
     ircStatus('connecting...','#cc3');
@@ -491,8 +495,17 @@ FKeyPad.ReadOut.value = (parseFloat(FKeyPad.ReadOut.value) / 100) * parseFloat(A
         if(msg.status==='disconnected'){ircStatus('offline','#666');ircLog('Disconnected.','sys');var t=document.getElementById('gg-irc-toggle');if(t)t.textContent='Connect';ircWs=null;}
       }
       else if(msg.type==='error'){ircLog('Error: '+ircEsc(msg.error||'unknown'),'sys');ircStatus('error','#c33');}};
-    ws.onerror=function(){ircLog('Connection failed. Bridge or network unreachable.','sys');ircStatus('error','#c33');};
-    ws.onclose=function(){ircWs=null;ircStatus('offline','#666');var t=document.getElementById('gg-irc-toggle');if(t)t.textContent='Connect';};
+    ws.onerror=function(){
+      ircLog('Connection failed. Bridge or network unreachable.','sys');
+      var gwUsed=''; try{gwUsed=ircGw();}catch(e){}
+      if(ircIsPrivateGw(gwUsed)){
+        var httpsGw=gwUsed.replace(/^wss:/,'https:').replace(/\/irc\/?$/,'/');
+        ircLog('This bridge URL is private to the owner\u2019s Sider instance and requires a Sider login — external devices without login get redirected and the WebSocket fails. Fix: open <b>'+ircEsc(httpsGw)+'</b> once while logged in and Connect there, or paste a public bridge URL into Gateway, or join <b>#scratchpad-drawer</b> via <b>web.libera.chat</b> / any IRC app (irc.libera.chat, TLS 6697).','sys');
+      } else {
+        ircLog('Check the Gateway URL, HTTPS/WSS, and that the bridge service is running (127.0.0.1:3121 via nginx /scratchpad/irc/).','sys');
+      }
+      ircStatus('error','#c33');};
+    ws.onclose=function(){var wasEarly=!ircSaw001;ircWs=null;ircStatus('offline','#666');var t=document.getElementById('gg-irc-toggle');if(t)t.textContent='Connect';if(wasEarly){var gwUsed='';try{gwUsed=ircGw();}catch(e){} if(ircIsPrivateGw(gwUsed)){ircLog('Hint: bridge closed before IRC login — usually Sider auth redirect on this private URL. See note above.','sys');}}};
   }
   function ircSend(){
     var inp=document.getElementById('gg-irc-input');var text=inp.value;if(!text||!text.trim())return;inp.value='';
