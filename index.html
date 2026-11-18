@@ -101,15 +101,20 @@
 #sciModeRow{display:flex;gap:6px;justify-content:center;align-items:center;margin:6px 0;flex-wrap:wrap;font-size:12px;}
 .sciModeBtn{background:#eef;border:1px solid #99c;border-radius:12px;padding:2px 10px;cursor:pointer;font-size:12px;}
 .sciModeBtn.active{background:#36c;color:#fff;border-color:#36c;}
-#sciGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin:4px auto;max-width:620px;}
-#sciGrid input[type="Button"]{width:100%;padding:8px 2px;font-size:14px;border-radius:6px;border:1px solid #888;background:#f0f0f0;cursor:pointer;}
-#sciGrid input[type="Button"].sci{background:#e8eefc;border-color:#7a9bd4;}
-#sciGrid input[type="Button"].op{background:#ffe8c8;border-color:#d49a4a;font-weight:bold;}
-#sciGrid input[type="Button"].eq{background:#4a90d9;color:#fff;border-color:#2f6cb0;font-weight:bold;}
-#sciGrid input[type="Button"].clr{background:#f5c6c6;border-color:#c66;}
-#sciGrid input[type="Button"]:hover{filter:brightness(0.93);}
-#sciGrid input[type="Button"]:active{transform:scale(.96);}
-@media (max-width:560px){#sciGrid input[type="Button"]{font-size:12px;padding:7px 1px;}}
+#sciCalcWrap{max-width:520px;}
+#sciGrid{display:block;margin:4px auto;max-width:500px;}
+#sciSection{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:2px auto;}
+#basicSection{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px auto;}
+.sciSectionLabel{font-size:11px;color:#7a9bd4;font-weight:bold;text-align:left;margin:6px 2px 4px;letter-spacing:1px;}
+#sciSection input[type="Button"],#basicSection input[type="Button"]{width:100%;padding:10px 2px;font-size:15px;border-radius:6px;border:1px solid #888;background:#f0f0f0;cursor:pointer;}
+#sciSection input[type="Button"].sci{background:#e8eefc;border-color:#7a9bd4;}
+#basicSection input[type="Button"].op,#sciSection input[type="Button"].op{background:#ffe8c8;border-color:#d49a4a;font-weight:bold;}
+#basicSection input[type="Button"].eq{background:#4a90d9;color:#fff;border-color:#2f6cb0;font-weight:bold;font-size:17px;padding:10px 2px;}
+#basicSection input[type="Button"].eqSpan{grid-column:span 4;}
+#basicSection input[type="Button"].clr,#sciSection input[type="Button"].clr{background:#f5c6c6;border-color:#c66;}
+#sciSection input[type="Button"]:hover,#basicSection input[type="Button"]:hover{filter:brightness(0.93);}
+#sciSection input[type="Button"]:active,#basicSection input[type="Button"]:active{transform:scale(.96);}
+@media (max-width:560px){#sciSection input[type="Button"],#basicSection input[type="Button"]{font-size:12px;padding:8px 1px;}}
 </style>
 <div id="sciCalcWrap">
 <div><input id="sciExprBox" name="Expr" type="Text" readonly="readonly" value="" placeholder="expression" /></div>
@@ -123,16 +128,19 @@
 <span style="color:#888;">| scientific calculator — type or click, Enter = equals</span>
 </div>
 <div id="sciGrid">
-<!-- scientific rows -->
+<div id="sciSectionWrap">
+<div class="sciSectionLabel">SCIENTIFIC</div>
+<div id="sciSection">
 <input type="Button" class="sci" data-sci="1" value="sin" onclick="SciFunc('sin')" id="bSin" />
 <input type="Button" class="sci" data-sci="1" value="cos" onclick="SciFunc('cos')" id="bCos" />
 <input type="Button" class="sci" data-sci="1" value="tan" onclick="SciFunc('tan')" id="bTan" />
 <input type="Button" class="sci" data-sci="1" value=" ( " onclick="AddToken('(')" />
 <input type="Button" class="sci" data-sci="1" value=" ) " onclick="AddToken(')')" />
-<input type="Button" class="clr" data-sci="1" value=" &#9003; " onclick="Backspace()" title="Backspace" />
 <input type="Button" class="sci" data-sci="1" value="ln" onclick="SciFunc('ln')" />
 <input type="Button" class="sci" data-sci="1" value="log" onclick="SciFunc('log')" />
 <input type="Button" class="sci" data-sci="1" value=" &#8730; " onclick="SciFunc('sqrt')" title="square root" />
+<input type="Button" class="sci" data-sci="1" value="&#8731;" onclick="SciFunc('cbrt')" title="cube root" />
+<input type="Button" class="sci" data-sci="1" value="&#960;" onclick="AddToken('pi')" title="pi" />
 <input type="Button" class="sci" data-sci="1" value="x&#178;" onclick="SciSquare()" title="square" />
 <input type="Button" class="sci" data-sci="1" value="x^y" onclick="AddToken('^')" title="power" />
 <input type="Button" class="sci" data-sci="1" value="1/x" onclick="SciFunc('inv')" />
@@ -140,37 +148,40 @@
 <input type="Button" class="sci" data-sci="1" value="|x|" onclick="SciFunc('abs')" />
 <input type="Button" class="sci" data-sci="1" value="10^x" onclick="SciFunc('pow10')" title="10 to the x" />
 <input type="Button" class="sci" data-sci="1" value="e^x" onclick="SciFunc('expe')" title="e to the x" />
-<input type="Button" class="sci" data-sci="1" value="mod" onclick="AddToken('mod')" />
-<input type="Button" class="sci" data-sci="1" value="&#960;" onclick="AddToken('pi')" title="pi" />
-<!-- classic pad (kept familiar) -->
-<input type="Button" value="  7  " onclick="NumPressed(7)" />
-<input type="Button" value="  8  " onclick="NumPressed(8)" />
-<input type="Button" value="  9  " onclick="NumPressed(9)" />
-<input type="Button" class="op" value="  &#247;  " onclick="Operation('/')" title="divide" />
-<input type="Button" class="clr" value="  C  " onclick="Clear()" />
-<input type="Button" class="clr" value="  CE " onclick="ClearEntry()" />
-<input type="Button" class="sci" data-sci="1" value="&#8731;" onclick="SciFunc('cbrt')" title="cube root" />
-<input type="Button" value="  4  " onclick="NumPressed(4)" />
-<input type="Button" value="  5  " onclick="NumPressed(5)" />
-<input type="Button" value="  6  " onclick="NumPressed(6)" />
-<input type="Button" class="op" value="  &#215;  " onclick="Operation('*')" title="multiply" />
-<input type="Button" value=" +/- " onclick="Neg()" />
-<input type="Button" value="  % " onclick="Percent()" />
 <input type="Button" class="sci" data-sci="1" value="EXP" onclick="AddToken('E')" title="scientific notation" />
-<input type="Button" value="  1  " onclick="NumPressed(1)" />
-<input type="Button" value="  2  " onclick="NumPressed(2)" />
-<input type="Button" value="  3  " onclick="NumPressed(3)" />
-<input type="Button" class="op" value="  &#8722;  " onclick="Operation('-')" title="minus" />
-<input type="Button" class="op" value="  +  " onclick="Operation('+')" title="plus" />
+<input type="Button" class="sci" data-sci="1" value="mod" onclick="AddToken('mod')" />
 <input type="Button" class="sci" data-sci="1" value="Ans" onclick="AddToken('Ans')" title="last answer" />
-<input type="Button" value="  0  " onclick="NumPressed(0)" />
-<input type="Button" value="  .  " onclick="Decimal()" />
-<input type="Button" class="op" value="  =  " onclick="Operation('=')" />
 <input type="Button" class="sci" data-sci="1" value="MC" onclick="MemClear()" />
 <input type="Button" class="sci" data-sci="1" value="MR" onclick="MemRecall()" />
 <input type="Button" class="sci" data-sci="1" value="M+" onclick="MemAdd()" />
 <input type="Button" class="sci" data-sci="1" value="M&#8722;" onclick="MemSub()" />
 <input type="Button" class="sci" data-sci="1" value="MS" onclick="MemStore()" />
+</div>
+</div>
+<div class="sciSectionLabel" style="color:#888;">BASIC &#8212; operators on the right, big = at the bottom</div>
+<div id="basicSection">
+<input type="Button" class="clr" value="  C  " onclick="Clear()" />
+<input type="Button" class="clr" value="  CE " onclick="ClearEntry()" />
+<input type="Button" class="clr" value=" &#9003; " onclick="Backspace()" title="Backspace" />
+<input type="Button" class="op" value="  &#247;  " onclick="Operation('/')" title="divide" />
+<input type="Button" value="  7  " onclick="NumPressed(7)" />
+<input type="Button" value="  8  " onclick="NumPressed(8)" />
+<input type="Button" value="  9  " onclick="NumPressed(9)" />
+<input type="Button" class="op" value="  &#215;  " onclick="Operation('*')" title="multiply" />
+<input type="Button" value="  4  " onclick="NumPressed(4)" />
+<input type="Button" value="  5  " onclick="NumPressed(5)" />
+<input type="Button" value="  6  " onclick="NumPressed(6)" />
+<input type="Button" class="op" value="  &#8722;  " onclick="Operation('-')" title="minus" />
+<input type="Button" value="  1  " onclick="NumPressed(1)" />
+<input type="Button" value="  2  " onclick="NumPressed(2)" />
+<input type="Button" value="  3  " onclick="NumPressed(3)" />
+<input type="Button" class="op" value="  +  " onclick="Operation('+')" title="plus" />
+<input type="Button" value="  % " onclick="Percent()" />
+<input type="Button" value=" +/- " onclick="Neg()" />
+<input type="Button" value="  0  " onclick="NumPressed(0)" />
+<input type="Button" value="  .  " onclick="Decimal()" />
+<input type="Button" class="op eq eqSpan" value="  =  " onclick="Operation('=')" />
+</div>
 </div>
 </div>
 </FORM>
@@ -541,9 +552,8 @@ function toggleInv(){
 function toggleSciPad(){
   G_SciVisible=!G_SciVisible;
   try{
-    var els=document.querySelectorAll('#sciGrid [data-sci="1"]');
-    for(var i=0;i<els.length;i++) els[i].style.display=G_SciVisible?"":"none";
-    document.getElementById("sciGrid").style.gridTemplateColumns=G_SciVisible?"repeat(6,1fr)":"repeat(3,1fr)";
+    var wrap=document.getElementById("sciSectionWrap");
+    if(wrap) wrap.style.display=G_SciVisible?"":"none";
     document.getElementById("btnBasicSci").textContent=G_SciVisible?"Hide Sci":"Show Sci";
   }catch(e){}
 }
