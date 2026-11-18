@@ -1,0 +1,414 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>CSLLC Scratch Pad</title>
+    <style type="text/css">
+        .style1
+        {
+            font-weight: bold;
+        }
+        .style2
+        {
+            font-weight: normal;
+        }
+        .style3
+        {
+            font-size: large;
+        }
+        #Text1
+        {
+            height: 395px;
+            width: 969px;
+        }
+        #TextArea1
+        {
+            height: 450px;
+            width: 950px;
+            text-align: left;
+        }
+        .style4
+        {
+            text-align: center;
+        }
+    </style>
+<style id="gg-style" type="text/css">
+  /* ---- Nondescript grey tab + sliding drawer (closed by default) ---- */
+  #gg-drawer{position:fixed;top:0;right:0;height:100vh;width:390px;max-width:94vw;z-index:99990;
+    background:#23232b;color:#eee;font-family:Verdana,Arial,Helvetica,sans-serif;font-size:13px;
+    box-shadow:-4px 0 18px rgba(0,0,0,.45);display:flex;flex-direction:row;
+    transform:translateX(calc(100% - 22px));transition:transform .28s ease;}
+  #gg-drawer.gg-open{transform:translateX(0);}
+  #gg-tabstrip{width:22px;min-width:22px;background:#8a8a8a;cursor:pointer;border:0;padding:0;
+    display:flex;align-items:center;justify-content:center;}
+  #gg-tabstrip:hover{background:#9d9d9d;}
+  #gg-tabstrip span{writing-mode:vertical-rl;transform:rotate(180deg);color:#6f6f6f;
+    font-size:11px;letter-spacing:2px;user-select:none;}
+  #gg-main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;}
+  #gg-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#17171d;border-bottom:1px solid #333;}
+  #gg-burger{background:#333;color:#eee;border:1px solid #555;border-radius:6px;font-size:17px;
+    width:34px;height:30px;cursor:pointer;line-height:1;}
+  #gg-title{font-weight:bold;font-size:14px;}
+  #gg-tiersub{font-size:11px;color:#bbb;font-weight:normal;}
+  #gg-menu{display:none;border-bottom:1px solid #333;background:#1b1b22;padding:8px 12px;}
+  #gg-menu.gg-show{display:block;}
+  #gg-menu button{margin:2px 4px 2px 0;}
+  .gg-btn{background:#3a3a46;color:#fff;border:1px solid #666;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;}
+  .gg-btn:hover{background:#4a4a58;}
+  .gg-btn:disabled{opacity:.4;cursor:default;}
+  .gg-btn.danger{background:#6e2a2a;border-color:#a05555;}
+  #gg-body{overflow-y:auto;padding:12px;flex:1;}
+  #gg-stats{background:#17171d;border:1px solid #3a3a46;border-radius:8px;padding:10px;text-align:center;}
+  #gg-count{font-size:26px;font-weight:bold;}
+  #gg-cpsline{color:#bbb;font-size:12px;}
+  #gg-clicker{font-size:74px;background:none;border:0;cursor:pointer;line-height:1;margin:8px 0;
+    transition:transform .07s ease;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));}
+  #gg-clicker:active{transform:scale(.92);}
+  #gg-tierbar{height:8px;background:#333;border-radius:4px;overflow:hidden;margin-top:8px;}
+  #gg-tierfill{height:100%;width:0%;background:linear-gradient(90deg,#c9a227,#ffe27a);}
+  #gg-section-title{margin:14px 0 6px;font-weight:bold;color:#ffe27a;}
+  .gg-card{background:#2b2b35;border:1px solid #444;border-radius:8px;padding:8px;margin-bottom:8px;}
+  .gg-card h4{margin:0 0 4px;font-size:13px;}
+  .gg-card p{margin:2px 0;color:#bbb;font-size:11px;}
+  .gg-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .gg-owned{background:#17171d;border-radius:10px;padding:0 8px;font-size:12px;}
+  #gg-toast{position:fixed;right:400px;bottom:20px;background:#111;color:#ffe27a;border:1px solid #c9a227;
+    padding:8px 12px;border-radius:8px;display:none;z-index:99999;max-width:280px;font-size:12px;}
+  #gg-ach-list .locked{opacity:.55;}
+  .gg-float{position:fixed;pointer-events:none;font-weight:bold;color:#ffe27a;z-index:99999;animation:ggFloat 0.9s ease-out forwards;}
+  @keyframes ggFloat{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-60px);}}
+  #gg-save-note{font-size:11px;color:#8f8;}
+</style>
+</head>
+<body>
+    <form id="form1" runat="server" class="style1">
+    <div class="style4">
+        <span class="style3">Scratchpad<br />
+        </span><span class="style2">(Everything will be lost when this window is
+        closed.)</span></div>
+    </form>
+    <p>
+    <p>
+     <div align="center"> <textarea id="TextArea1" name="S1" align="center"></textarea></p>
+</div>
+
+<CENTER>
+
+<FORM name="Keypad" action="">
+<TABLE>
+<B>
+<TABLE border="2" width="50" height="60" cellpadding="1" cellspacing="5">
+<TR>
+<TD colspan="3" align="middle">
+<input name="ReadOut" type="Text" size="24" value="0" width="100%" />
+</TD>
+<TD>
+</TD>
+<TD>
+<input name="btnClear" type="Button" value="  C  " onclick="Clear()" />
+</TD>
+<TD><input name="btnClearEntry" type="Button" value="  CE " onclick="ClearEntry()" />
+</TD>
+</TR>
+<TR>
+<TD>
+<input name="btnSeven" type="Button" value="  7  " onclick="NumPressed(7)" />
+</TD>
+<TD>
+<input name="btnEight" type="Button" value="  8  " onclick="NumPressed(8)" />
+</TD>
+<TD>
+<input name="btnNine" type="Button" value="  9  " onclick="NumPressed(9)" />
+</TD>
+<TD>
+</TD>
+<TD>
+<input name="btnNeg" type="Button" value=" +/- " onclick="Neg()" />
+</TD>
+<TD>
+<input name="btnPercent" type="Button" value="  % " onclick="Percent()" />
+</TD>
+</TR>
+<TR>
+<TD>
+<input name="btnFour" type="Button" value="  4  " onclick="NumPressed(4)" />
+</TD>
+<TD>
+<input name="btnFive" type="Button" value="  5  " onclick="NumPressed(5)" />
+</TD>
+<TD>
+<input name="btnSix" type="Button" value="  6  " onclick="NumPressed(6)" />
+</TD>
+<TD>
+</TD>
+<TD align="middle"><input name="btnPlus" type="Button" value="  +  " onclick="Operation('+')" />
+</TD>
+<TD align="middle"><input name="btnMinus" type="Button" value="   -   " onclick="Operation('-')" />
+</TD>
+</TR>
+<TR>
+<TD>
+<input name="btnOne" type="Button" value="  1  " onclick="NumPressed(1)" />
+</TD>
+<TD>
+<input name="btnTwo" type="Button" value="  2  " onclick="NumPressed(2)" />
+</TD>
+<TD>
+<input name="btnThree" type="Button" value="  3  " onclick="NumPressed(3)" />
+</TD>
+<TD>
+</TD>
+<TD align="middle"><input name="btnMultiply" type="Button" value="  *  " onclick="Operation('*')" />
+</TD>
+<TD align="middle"><input name="btnDivide" type="Button" value="   /   " onclick="Operation('/')" />
+</TD>
+</TR>
+</TABLE>
+</TABLE>
+</B>
+</FORM>
+</CENTER>
+<font face="Verdana, Arial, Helvetica" size="2">
+<script language="JavaScript">
+var FKeyPad = document.Keypad;
+var Accumulate = 0;
+var FlagNewNum = false;
+var PendingOp = "";
+function NumPressed (Num) {
+if (FlagNewNum) {
+FKeyPad.ReadOut.value  = Num;
+FlagNewNum = false;
+   }
+else {
+if (FKeyPad.ReadOut.value == "0")
+FKeyPad.ReadOut.value = Num;
+else
+FKeyPad.ReadOut.value += Num;
+   }
+}
+function Operation (Op) {
+var Readout = FKeyPad.ReadOut.value;
+if (FlagNewNum && PendingOp != "=");
+else
+{
+FlagNewNum = true;
+if ( '+' == PendingOp )
+Accumulate += parseFloat(Readout);
+else if ( '-' == PendingOp )
+Accumulate -= parseFloat(Readout);
+else if ( '/' == PendingOp )
+Accumulate /= parseFloat(Readout);
+else if ( '*' == PendingOp )
+Accumulate *= parseFloat(Readout);
+else
+Accumulate = parseFloat(Readout);
+FKeyPad.ReadOut.value = Accumulate;
+PendingOp = Op;
+   }
+}
+function Decimal () {
+var curReadOut = FKeyPad.ReadOut.value;
+if (FlagNewNum) {
+curReadOut = "0.";
+FlagNewNum = false;
+   }
+else
+{
+if (curReadOut.indexOf(".") == -1)
+curReadOut += ".";
+   }
+FKeyPad.ReadOut.value = curReadOut;
+}
+function ClearEntry () {
+FKeyPad.ReadOut.value = "0";
+FlagNewNum = true;
+}
+function Clear () {
+Accumulate = 0;
+PendingOp = "";
+ClearEntry();
+}
+function Neg () {
+FKeyPad.ReadOut.value = parseFloat(FKeyPad.ReadOut.value) * -1;
+}
+function Percent () {
+FKeyPad.ReadOut.value = (parseFloat(FKeyPad.ReadOut.value) / 100) * parseFloat(Accumulate);
+}
+</script>
+
+<!-- ===== Embedded clicker drawer (closed by default, G toggles, grey side tab) ===== -->
+<div id="gg-drawer" aria-hidden="true">
+  <div id="gg-tabstrip" title="Open panel (G)" role="button" aria-label="Open side panel" tabindex="0"><span>&#8942;</span></div>
+  <div id="gg-main">
+    <div id="gg-header">
+      <button id="gg-burger" title="Menu" aria-label="Menu">&#9776;</button>
+      <div><div id="gg-title">Cookie Drawer</div><div id="gg-tiersub">Tier 0 &mdash; Drifter</div></div>
+      <div style="flex:1"></div>
+      <button id="gg-close" class="gg-btn" title="Close (G)">&times;</button>
+    </div>
+    <div id="gg-menu">
+      <div>
+        <button class="gg-btn" id="gg-tab-game">Game</button>
+        <button class="gg-btn" id="gg-tab-settings">Settings</button>
+        <button class="gg-btn" id="gg-tab-ach">Achievements</button>
+      </div>
+      <div id="gg-pane-settings" style="display:none;margin-top:8px;">
+        <button class="gg-btn" id="gg-save">Save Now</button>
+        <button class="gg-btn danger" id="gg-reset">Reset Save</button>
+        <label style="display:block;margin-top:6px;font-size:12px;"><input type="checkbox" id="gg-autosave" checked="checked" /> Autosave every 15s</label>
+        <div id="gg-save-note"></div>
+      </div>
+      <div id="gg-pane-ach" style="display:none;margin-top:8px;"><div id="gg-ach-list"></div></div>
+    </div>
+    <div id="gg-body">
+      <div id="gg-stats">
+        <div id="gg-count">0</div>
+        <div>cookies</div>
+        <div id="gg-cpsline">per click: 1 &nbsp;|&nbsp; per sec: 0</div>
+        <button id="gg-clicker" title="Click">&#127850;</button>
+        <div id="gg-tiername" style="font-size:12px;"></div>
+        <div id="gg-tierbar"><div id="gg-tierfill"></div></div>
+      </div>
+      <div id="gg-section-title">Upgrades</div>
+      <div id="gg-upgrades"></div>
+      <div id="gg-section-title">Buildings</div>
+      <div id="gg-buildings"></div>
+    </div>
+  </div>
+</div>
+<div id="gg-toast"></div>
+<script type="text/javascript">
+(function(){
+  "use strict";
+  var KEY='gg_scratchpad_clicker_v1';
+  var BUILDINGS=[
+    {id:'cursor', name:'Cursor',   base:15,     cps:0.1,  desc:'Auto-clicks softly.'},
+    {id:'grandma',name:'Grandma',  base:100,    cps:1,    desc:'Bakes with love.'},
+    {id:'farm',   name:'Farm',     base:1100,   cps:8,    desc:'Grows cookie wheat.'},
+    {id:'mine',   name:'Mine',     base:12000,  cps:47,   desc:'Digs chocolate veins.'},
+    {id:'factory',name:'Factory',  base:130000, cps:260,  desc:'Mass-produces treats.'},
+    {id:'bank',   name:'Bank',     base:1400000,cps:1400, desc:'Compounds interest in cookies.'},
+    {id:'temple', name:'Temple',   base:20000000,cps:7800,desc:'Ancient cookie rituals.'}
+  ];
+  var UPGRADES=[
+    {id:'u_click1', name:'Reinforced Finger', cost:100,     desc:'+1 per click.', req:function(s){return s.totalClicks>=15;}},
+    {id:'u_click2', name:'Titanium Finger',   cost:1000,    desc:'Click power x2.', req:function(s){return s.totalClicks>=100;}},
+    {id:'u_click3', name:'Quantum Finger',    cost:50000,   desc:'Click power x2.', req:function(s){return s.totalClicks>=500;}},
+    {id:'u_cur1',   name:'Ambidextrous',      cost:1000,    desc:'Cursors x2.', req:function(s){return (s.buildings.cursor||0)>=5;}},
+    {id:'u_gran1',  name:'Steel Rolling Pins',cost:5000,    desc:'Grandmas x2.', req:function(s){return (s.buildings.grandma||0)>=5;}},
+    {id:'u_farm1',  name:'Fertilizer',        cost:30000,   desc:'Farms x2.', req:function(s){return (s.buildings.farm||0)>=5;}},
+    {id:'u_mine1',  name:'Dynamite',          cost:250000,  desc:'Mines x2.', req:function(s){return (s.buildings.mine||0)>=3;}},
+    {id:'u_all1',   name:'Golden Sugar',      cost:500000,  desc:'Everything +25%.', req:function(s){return s.totalEarned>=100000;}}
+  ];
+  var TIERS=[
+    {n:0,name:'Drifter',at:0},{n:1,name:'Settler',at:1000},{n:2,name:'Merchant',at:50000},
+    {n:3,name:'Industrialist',at:1000000},{n:4,name:'Tycoon',at:50000000},{n:5,name:'Overlord',at:1000000000}
+  ];
+  var ACH=[
+    {id:'a_first', name:'First Crumbs', desc:'Click once.'},
+    {id:'a_100c',  name:'Warm Fingers', desc:'Click 100 times.'},
+    {id:'a_1000c', name:'Carpal Legend', desc:'Click 1,000 times.'},
+    {id:'a_1k',    name:'Baker', desc:'Earn 1,000 total.'},
+    {id:'a_100k',  name:'Pastry Chef', desc:'Earn 100,000 total.'},
+    {id:'a_1m',    name:'Cookie Millionaire', desc:'Earn 1,000,000 total.'},
+    {id:'a_b10',   name:'Landlord', desc:'Own 10 buildings.'},
+    {id:'a_b50',   name:'Mogul', desc:'Own 50 buildings.'},
+    {id:'a_cps10', name:'Automation', desc:'Reach 10/sec.'},
+    {id:'a_cps100',name:'Assembly Line', desc:'Reach 100/sec.'},
+    {id:'a_up1',   name:'Shopper', desc:'Buy an upgrade.'},
+    {id:'a_t3',    name:'Industrial Age', desc:'Reach Tier 3 Industrialist.'}
+  ];
+  function def(){return {cookies:0,totalEarned:0,totalClicks:0,buildings:{},upgrades:{},ach:{},autosave:true};}
+  var S=def();
+  try{var raw=localStorage.getItem(KEY); if(raw){var p=JSON.parse(raw); if(p&&typeof p==='object'){S=Object.assign(def(),p);} }}catch(e){}
+  function fmt(n){if(n<1000)return Math.floor(n).toString();var u=['K','M','B','T','Q'];var i=-1;var x=n;while(x>=1000&&i<u.length-1){x/=1000;i++;}return (x>=100?x.toFixed(0):x>=10?x.toFixed(1):x.toFixed(2))+u[i];}
+  function cost(b){var c=(S.buildings[b.id]||0);return Math.ceil(b.base*Math.pow(1.15,c));}
+  function bMult(id){var m=1;
+    if(id==='cursor'&&S.upgrades.u_cur1)m*=2;
+    if(id==='grandma'&&S.upgrades.u_gran1)m*=2;
+    if(id==='farm'&&S.upgrades.u_farm1)m*=2;
+    if(id==='mine'&&S.upgrades.u_mine1)m*=2;
+    if(S.upgrades.u_all1)m*=1.25; return m;}
+  function tier(){var t=TIERS[0];for(var i=0;i<TIERS.length;i++){if(S.totalEarned>=TIERS[i].at)t=TIERS[i];}return t;}
+  function tierBonus(){return 1+tier().n*0.05;}
+  function clickPow(){var p=1;if(S.upgrades.u_click1)p+=1;if(S.upgrades.u_click2)p*=2;if(S.upgrades.u_click3)p*=2;if(S.upgrades.u_all1)p*=1.25;return p*tierBonus();}
+  function cps(){var s=0;for(var i=0;i<BUILDINGS.length;i++){var b=BUILDINGS[i];s+=(S.buildings[b.id]||0)*b.cps*bMult(b.id);}if(S.upgrades.u_all1){}return s*tierBonus();}
+  var drawer=document.getElementById('gg-drawer');
+  var toast=document.getElementById('gg-toast');
+  var toastT=null;
+  function showToast(t){toast.textContent=t;toast.style.display='block';clearTimeout(toastT);toastT=setTimeout(function(){toast.style.display='none';},2600);}
+  function unlock(id){if(S.ach[id])return;S.ach[id]=true;var a=null;for(var i=0;i<ACH.length;i++)if(ACH[i].id===id)a=ACH[i];showToast('Achievement: '+(a?a.name:id));renderAch();}
+  function checkAch(){var bc=0;for(var k in S.buildings)bc+=S.buildings[k];var c=cps();
+    if(S.totalClicks>=1)unlock('a_first'); if(S.totalClicks>=100)unlock('a_100c'); if(S.totalClicks>=1000)unlock('a_1000c');
+    if(S.totalEarned>=1000)unlock('a_1k'); if(S.totalEarned>=100000)unlock('a_100k'); if(S.totalEarned>=1000000)unlock('a_1m');
+    if(bc>=10)unlock('a_b10'); if(bc>=50)unlock('a_b50'); if(c>=10)unlock('a_cps10'); if(c>=100)unlock('a_cps100');
+    if(Object.keys(S.upgrades).length>=1)unlock('a_up1'); if(tier().n>=3)unlock('a_t3');}
+  function gain(n){S.cookies+=n;S.totalEarned+=n;}
+  function render(){
+    document.getElementById('gg-count').textContent=fmt(S.cookies);
+    document.getElementById('gg-cpsline').textContent='per click: '+fmt(clickPow())+'  |  per sec: '+fmt(cps());
+    var t=tier();var next=null;for(var i=0;i<TIERS.length;i++)if(TIERS[i].n===t.n+1)next=TIERS[i];
+    document.getElementById('gg-tiersub').textContent='Tier '+t.n+' — '+t.name;
+    document.getElementById('gg-tiername').textContent=next?('Next: '+next.name+' at '+fmt(next.at)+' total ('+Math.min(100,S.totalEarned/next.at*100).toFixed(1)+'%)'):'Max tier reached. Bonus +'+Math.round((tierBonus()-1)*100)+'%';
+    document.getElementById('gg-tierfill').style.width=next?(Math.min(100,S.totalEarned/next.at*100)+'%'):'100%';
+    var ub=document.getElementById('gg-upgrades');ub.innerHTML='';
+    var anyU=false;
+    for(var i=0;i<UPGRADES.length;i++){var u=UPGRADES[i];if(S.upgrades[u.id])continue;var ok=false;try{ok=u.req(S);}catch(e){}if(!ok)continue;anyU=true;
+      (function(u){var d=document.createElement('div');d.className='gg-card';
+        d.innerHTML='<div class="gg-row"><div><h4></h4><p></p></div></div>';
+        d.querySelector('h4').textContent=u.name+' — '+fmt(u.cost);
+        d.querySelector('p').textContent=u.desc;
+        var btn=document.createElement('button');btn.className='gg-btn';btn.textContent='Buy';btn.disabled=S.cookies<u.cost;
+        btn.onclick=function(){if(S.cookies<u.cost)return;S.cookies-=u.cost;S.upgrades[u.id]=true;checkAch();save(true);render();};
+        d.querySelector('.gg-row').appendChild(btn);ub.appendChild(d);})(u);}
+    if(!anyU){ub.innerHTML='<p style="color:#888;">No upgrades available yet — keep clicking/expanding.</p>';}
+    var bb=document.getElementById('gg-buildings');bb.innerHTML='';
+    for(var j=0;j<BUILDINGS.length;j++){var b=BUILDINGS[j];var c=cost(b);var own=S.buildings[b.id]||0;
+      (function(b,c,own){var d=document.createElement('div');d.className='gg-card';
+        d.innerHTML='<div class="gg-row"><div><h4></h4><p></p></div><div style="text-align:right;"></div></div>';
+        d.querySelector('h4').textContent=b.name+' × '+own;
+        d.querySelector('p').textContent=b.desc+' Each: '+b.cps+'/s (x'+bMult(b.id).toFixed(2)+')';
+        var wrap=d.querySelectorAll('div')[2]||d;
+        var btn=document.createElement('button');btn.className='gg-btn';btn.textContent='Buy '+fmt(c);btn.disabled=S.cookies<c;
+        btn.onclick=function(){var cc=cost(b);if(S.cookies<cc)return;S.cookies-=cc;S.buildings[b.id]=(S.buildings[b.id]||0)+1;checkAch();save(true);render();};
+        d.querySelector('.gg-row').lastChild.appendChild(btn);bb.appendChild(d);})(b,c,own);}
+    renderAch();
+  }
+  function renderAch(){var l=document.getElementById('gg-ach-list');if(!l)return;l.innerHTML='';
+    for(var i=0;i<ACH.length;i++){var a=ACH[i];var un=!!S.ach[a.id];var d=document.createElement('div');
+      d.className='gg-card'+(un?'':' locked');d.innerHTML='<h4></h4><p></p>';
+      d.querySelector('h4').textContent=(un?'\u2713 ':'\u25CB ')+a.name;d.querySelector('p').textContent=a.desc;l.appendChild(d);}}
+  function save(silent){try{localStorage.setItem(KEY,JSON.stringify(S));if(!silent){var n=document.getElementById('gg-save-note');n.textContent='Saved '+new Date().toLocaleTimeString();}}catch(e){}}
+  // events
+  var clicker=document.getElementById('gg-clicker');
+  clicker.addEventListener('click',function(ev){var p=clickPow();gain(p);S.totalClicks++;checkAch();render();
+    var f=document.createElement('div');f.className='gg-float';f.textContent='+'+fmt(p);
+    f.style.left=(ev.clientX-10)+'px';f.style.top=(ev.clientY-20)+'px';document.body.appendChild(f);setTimeout(function(){f.remove();},900);});
+  setInterval(function(){var c=cps();if(c>0){gain(c/10);checkAch();render();}},100);
+  setInterval(function(){if(S.autosave!==false)save(true);},15000);
+  document.getElementById('gg-save').onclick=function(){save(false);render();};
+  document.getElementById('gg-reset').onclick=function(){if(confirm('Reset cookie save?')){S=def();save(true);render();}};
+  var ab=document.getElementById('gg-autosave');ab.checked=(S.autosave!==false);
+  ab.onchange=function(){S.autosave=ab.checked;save(true);};
+  if(S.autosave===false)ab.checked=false;
+  function toggle(force){var open=drawer.classList.contains('gg-open');var want=(typeof force==='boolean')?force:!open;
+    drawer.classList.toggle('gg-open',want);drawer.setAttribute('aria-hidden',want?'false':'true');}
+  document.getElementById('gg-tabstrip').addEventListener('click',function(){toggle();});
+  document.getElementById('gg-tabstrip').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
+  document.getElementById('gg-close').addEventListener('click',function(){toggle(false);});
+  document.addEventListener('keydown',function(e){if(!e||!e.key)return;if(e.key.toLowerCase()!=='g')return;
+    var t=e.target;var tag=t&&t.tagName?t.tagName.toLowerCase():'';if(tag==='input'||tag==='textarea'||tag==='select'||(t&&t.isContentEditable))return;
+    if(e.ctrlKey||e.metaKey||e.altKey)return;toggle();});
+  var burger=document.getElementById('gg-burger');var menu=document.getElementById('gg-menu');
+  burger.addEventListener('click',function(){menu.classList.toggle('gg-show');});
+  function showPane(which){document.getElementById('gg-pane-settings').style.display=which==='settings'?'block':'none';
+    document.getElementById('gg-pane-ach').style.display=which==='ach'?'block':'none';
+    if(!menu.classList.contains('gg-show'))menu.classList.add('gg-show');}
+  document.getElementById('gg-tab-settings').onclick=function(){var p=document.getElementById('gg-pane-settings');showPane(p.style.display==='block'?'game':'settings');};
+  document.getElementById('gg-tab-ach').onclick=function(){var p=document.getElementById('gg-pane-ach');showPane(p.style.display==='block'?'game':'ach');};
+  document.getElementById('gg-tab-game').onclick=function(){document.getElementById('gg-pane-settings').style.display='none';document.getElementById('gg-pane-ach').style.display='none';};
+  render();
+})();
+</script>
+</font>
+</body>
+</html>
