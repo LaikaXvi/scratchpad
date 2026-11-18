@@ -93,160 +93,493 @@
 
 <CENTER>
 
-<FORM name="Keypad" action="">
-<TABLE>
-<B>
-<TABLE border="2" width="50" height="60" cellpadding="1" cellspacing="5">
-<TR>
-<TD colspan="3" align="middle">
-<input name="ReadOut" type="Text" size="24" value="0" width="100%" />
-</TD>
-<TD>
-</TD>
-<TD>
-<input name="btnClear" type="Button" value="  C  " onclick="Clear()" />
-</TD>
-<TD><input name="btnClearEntry" type="Button" value="  CE " onclick="ClearEntry()" />
-</TD>
-</TR>
-<TR>
-<TD>
-<input name="btnSeven" type="Button" value="  7  " onclick="NumPressed(7)" />
-</TD>
-<TD>
-<input name="btnEight" type="Button" value="  8  " onclick="NumPressed(8)" />
-</TD>
-<TD>
-<input name="btnNine" type="Button" value="  9  " onclick="NumPressed(9)" />
-</TD>
-<TD>
-</TD>
-<TD>
-<input name="btnNeg" type="Button" value=" +/- " onclick="Neg()" />
-</TD>
-<TD>
-<input name="btnPercent" type="Button" value="  % " onclick="Percent()" />
-</TD>
-</TR>
-<TR>
-<TD>
-<input name="btnFour" type="Button" value="  4  " onclick="NumPressed(4)" />
-</TD>
-<TD>
-<input name="btnFive" type="Button" value="  5  " onclick="NumPressed(5)" />
-</TD>
-<TD>
-<input name="btnSix" type="Button" value="  6  " onclick="NumPressed(6)" />
-</TD>
-<TD>
-</TD>
-<TD align="middle"><input name="btnPlus" type="Button" value="  +  " onclick="Operation('+')" />
-</TD>
-<TD align="middle"><input name="btnMinus" type="Button" value="   -   " onclick="Operation('-')" />
-</TD>
-</TR>
-<TR>
-<TD>
-<input name="btnOne" type="Button" value="  1  " onclick="NumPressed(1)" />
-</TD>
-<TD>
-<input name="btnTwo" type="Button" value="  2  " onclick="NumPressed(2)" />
-</TD>
-<TD>
-<input name="btnThree" type="Button" value="  3  " onclick="NumPressed(3)" />
-</TD>
-<TD>
-</TD>
-<TD align="middle"><input name="btnMultiply" type="Button" value="  *  " onclick="Operation('*')" />
-</TD>
-<TD align="middle"><input name="btnDivide" type="Button" value="   /   " onclick="Operation('/')" />
-</TD>
-</TR>
-<TR>
-<TD>
-<input name="btnZero" type="Button" value="  0  " onclick="NumPressed(0)" />
-</TD>
-<TD>
-<input name="btnDecimal" type="Button" value="  .  " onclick="Decimal()" />
-</TD>
-<TD colspan="3">
-</TD>
-<TD>
-<input name="btnEquals" type="Button" value="  =  " onclick="Operation('=')" />
-</TD>
-</TR>
-</TABLE>
-</TABLE>
-</B>
+<FORM name="Keypad" action="" onsubmit="return false;">
+<style type="text/css">
+#sciCalcWrap{max-width:640px;margin:0 auto;text-align:center;font-family:Verdana,Arial,Helvetica,sans-serif;}
+#sciExprBox{width:96%;font-size:12px;color:#555;border:1px solid #bbb;border-radius:6px;padding:4px 6px;margin-bottom:4px;background:#f7f7f7;text-align:right;box-sizing:border-box;}
+#sciReadOut{width:96%;font-size:24px;font-weight:bold;border:2px solid #888;border-radius:6px;padding:6px;text-align:right;box-sizing:border-box;background:#fff;}
+#sciModeRow{display:flex;gap:6px;justify-content:center;align-items:center;margin:6px 0;flex-wrap:wrap;font-size:12px;}
+.sciModeBtn{background:#eef;border:1px solid #99c;border-radius:12px;padding:2px 10px;cursor:pointer;font-size:12px;}
+.sciModeBtn.active{background:#36c;color:#fff;border-color:#36c;}
+#sciGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin:4px auto;max-width:620px;}
+#sciGrid input[type="Button"]{width:100%;padding:8px 2px;font-size:14px;border-radius:6px;border:1px solid #888;background:#f0f0f0;cursor:pointer;}
+#sciGrid input[type="Button"].sci{background:#e8eefc;border-color:#7a9bd4;}
+#sciGrid input[type="Button"].op{background:#ffe8c8;border-color:#d49a4a;font-weight:bold;}
+#sciGrid input[type="Button"].eq{background:#4a90d9;color:#fff;border-color:#2f6cb0;font-weight:bold;}
+#sciGrid input[type="Button"].clr{background:#f5c6c6;border-color:#c66;}
+#sciGrid input[type="Button"]:hover{filter:brightness(0.93);}
+#sciGrid input[type="Button"]:active{transform:scale(.96);}
+@media (max-width:560px){#sciGrid input[type="Button"]{font-size:12px;padding:7px 1px;}}
+</style>
+<div id="sciCalcWrap">
+<div><input id="sciExprBox" name="Expr" type="Text" readonly="readonly" value="" placeholder="expression" /></div>
+<div><input id="sciReadOut" name="ReadOut" type="Text" size="24" value="0" autocomplete="off" /></div>
+<div id="sciModeRow">
+<button type="button" class="sciModeBtn active" id="btnDeg" onclick="setAngleMode('deg')">DEG</button>
+<button type="button" class="sciModeBtn" id="btnRad" onclick="setAngleMode('rad')">RAD</button>
+<button type="button" class="sciModeBtn" id="btnInv" onclick="toggleInv()">INV</button>
+<button type="button" class="sciModeBtn" id="btnBasicSci" onclick="toggleSciPad()">Hide Sci</button>
+<span id="sciMemFlag" style="color:#888;">M: 0</span>
+<span style="color:#888;">| scientific calculator — type or click, Enter = equals</span>
+</div>
+<div id="sciGrid">
+<!-- scientific rows -->
+<input type="Button" class="sci" data-sci="1" value="sin" onclick="SciFunc('sin')" id="bSin" />
+<input type="Button" class="sci" data-sci="1" value="cos" onclick="SciFunc('cos')" id="bCos" />
+<input type="Button" class="sci" data-sci="1" value="tan" onclick="SciFunc('tan')" id="bTan" />
+<input type="Button" class="sci" data-sci="1" value=" ( " onclick="AddToken('(')" />
+<input type="Button" class="sci" data-sci="1" value=" ) " onclick="AddToken(')')" />
+<input type="Button" class="clr" data-sci="1" value=" &#9003; " onclick="Backspace()" title="Backspace" />
+<input type="Button" class="sci" data-sci="1" value="ln" onclick="SciFunc('ln')" />
+<input type="Button" class="sci" data-sci="1" value="log" onclick="SciFunc('log')" />
+<input type="Button" class="sci" data-sci="1" value=" &#8730; " onclick="SciFunc('sqrt')" title="square root" />
+<input type="Button" class="sci" data-sci="1" value="x&#178;" onclick="SciSquare()" title="square" />
+<input type="Button" class="sci" data-sci="1" value="x^y" onclick="AddToken('^')" title="power" />
+<input type="Button" class="sci" data-sci="1" value="1/x" onclick="SciFunc('inv')" />
+<input type="Button" class="sci" data-sci="1" value="n!" onclick="SciFunc('fact')" />
+<input type="Button" class="sci" data-sci="1" value="|x|" onclick="SciFunc('abs')" />
+<input type="Button" class="sci" data-sci="1" value="10^x" onclick="SciFunc('pow10')" title="10 to the x" />
+<input type="Button" class="sci" data-sci="1" value="e^x" onclick="SciFunc('expe')" title="e to the x" />
+<input type="Button" class="sci" data-sci="1" value="mod" onclick="AddToken('mod')" />
+<input type="Button" class="sci" data-sci="1" value="&#960;" onclick="AddToken('pi')" title="pi" />
+<!-- classic pad (kept familiar) -->
+<input type="Button" value="  7  " onclick="NumPressed(7)" />
+<input type="Button" value="  8  " onclick="NumPressed(8)" />
+<input type="Button" value="  9  " onclick="NumPressed(9)" />
+<input type="Button" class="op" value="  &#247;  " onclick="Operation('/')" title="divide" />
+<input type="Button" class="clr" value="  C  " onclick="Clear()" />
+<input type="Button" class="clr" value="  CE " onclick="ClearEntry()" />
+<input type="Button" class="sci" data-sci="1" value="&#8731;" onclick="SciFunc('cbrt')" title="cube root" />
+<input type="Button" value="  4  " onclick="NumPressed(4)" />
+<input type="Button" value="  5  " onclick="NumPressed(5)" />
+<input type="Button" value="  6  " onclick="NumPressed(6)" />
+<input type="Button" class="op" value="  &#215;  " onclick="Operation('*')" title="multiply" />
+<input type="Button" value=" +/- " onclick="Neg()" />
+<input type="Button" value="  % " onclick="Percent()" />
+<input type="Button" class="sci" data-sci="1" value="EXP" onclick="AddToken('E')" title="scientific notation" />
+<input type="Button" value="  1  " onclick="NumPressed(1)" />
+<input type="Button" value="  2  " onclick="NumPressed(2)" />
+<input type="Button" value="  3  " onclick="NumPressed(3)" />
+<input type="Button" class="op" value="  &#8722;  " onclick="Operation('-')" title="minus" />
+<input type="Button" class="op" value="  +  " onclick="Operation('+')" title="plus" />
+<input type="Button" class="sci" data-sci="1" value="Ans" onclick="AddToken('Ans')" title="last answer" />
+<input type="Button" value="  0  " onclick="NumPressed(0)" />
+<input type="Button" value="  .  " onclick="Decimal()" />
+<input type="Button" class="op" value="  =  " onclick="Operation('=')" />
+<input type="Button" class="sci" data-sci="1" value="MC" onclick="MemClear()" />
+<input type="Button" class="sci" data-sci="1" value="MR" onclick="MemRecall()" />
+<input type="Button" class="sci" data-sci="1" value="M+" onclick="MemAdd()" />
+<input type="Button" class="sci" data-sci="1" value="M&#8722;" onclick="MemSub()" />
+<input type="Button" class="sci" data-sci="1" value="MS" onclick="MemStore()" />
+</div>
+</div>
 </FORM>
 </CENTER>
 <font face="Verdana, Arial, Helvetica" size="2">
 <script language="JavaScript">
+// ===== Scientific calculator engine (expression based, keeps legacy entry points) =====
 var FKeyPad = document.Keypad;
-var Accumulate = 0;
-var FlagNewNum = false;
-var PendingOp = "";
-function NumPressed (Num) {
-if (FlagNewNum) {
-FKeyPad.ReadOut.value  = Num;
-FlagNewNum = false;
-   }
-else {
-if (FKeyPad.ReadOut.value == "0")
-FKeyPad.ReadOut.value = Num;
-else
-FKeyPad.ReadOut.value += Num;
-   }
+var G_Expr = "";
+var G_JustEvaluated = false;
+var G_AngleMode = "deg"; // 'deg' | 'rad'
+var G_Inv = false;
+var G_Mem = 0;
+var G_Ans = 0;
+var G_SciVisible = true;
+
+function SciGetReadout(){ return FKeyPad.ReadOut.value; }
+function SciSetReadout(v){ FKeyPad.ReadOut.value = v; syncUrl(); }
+function SciSetExpr(v){
+  G_Expr = v;
+  try{ FKeyPad.Expr.value = prettyExpr(v); }catch(e){}
 }
-function Operation (Op) {
-var Readout = FKeyPad.ReadOut.value;
-if (FlagNewNum && PendingOp != "=");
-else
-{
-FlagNewNum = true;
-if ( '+' == PendingOp )
-Accumulate += parseFloat(Readout);
-else if ( '-' == PendingOp )
-Accumulate -= parseFloat(Readout);
-else if ( '/' == PendingOp )
-Accumulate /= parseFloat(Readout);
-else if ( '*' == PendingOp )
-Accumulate *= parseFloat(Readout);
-else
-Accumulate = parseFloat(Readout);
-FKeyPad.ReadOut.value = Accumulate;
-PendingOp = Op;
-   }
+function prettyExpr(s){
+  return String(s).replace(/\*/g,"\u00D7").replace(/pi/g,"\u03C0").replace(/mod/g," mod ");
 }
-function Decimal () {
-var curReadOut = FKeyPad.ReadOut.value;
-if (FlagNewNum) {
-curReadOut = "0.";
-FlagNewNum = false;
-   }
-else
-{
-if (curReadOut.indexOf(".") == -1)
-curReadOut += ".";
-   }
-FKeyPad.ReadOut.value = curReadOut;
+function syncUrl(){
+  try{
+    var u = new URL(window.location.href);
+    u.searchParams.set("ReadOut", FKeyPad.ReadOut.value);
+    window.history.replaceState(null,"",u.toString());
+  }catch(e){}
 }
-function ClearEntry () {
-FKeyPad.ReadOut.value = "0";
-FlagNewNum = true;
+function lastNumberInfo(){
+  var m = G_Expr.match(/(\d+\.?\d*(?:E-?\d+)?|\.\d+(?:E-?\d+)?)$/);
+  return m ? {text:m[1], index:G_Expr.length-m[1].length} : null;
 }
-function Clear () {
-Accumulate = 0;
-PendingOp = "";
-ClearEntry();
+function ensureFresh(){
+  if(G_JustEvaluated){ SciSetExpr(""); G_JustEvaluated=false; }
 }
-function Neg () {
-FKeyPad.ReadOut.value = parseFloat(FKeyPad.ReadOut.value) * -1;
+function NumPressed(Num){
+  ensureFresh();
+  var info = lastNumberInfo();
+  if(G_Expr==="" && SciGetReadout()==="0"){ SciSetReadout(String(Num)); SciSetExpr(String(Num)); return; }
+  if(G_JustEvaluated){ SciSetExpr(String(Num)); SciSetReadout(String(Num)); G_JustEvaluated=false; return; }
+  // If readout shows a bare result and expr empty, start over
+  if(G_Expr===""){ SciSetExpr(String(Num)); SciSetReadout(String(Num)); return; }
+  SciSetExpr(G_Expr + String(Num));
+  var li = lastNumberInfo();
+  SciSetReadout(li ? li.text : SciGetReadout());
 }
-function Percent () {
-FKeyPad.ReadOut.value = (parseFloat(FKeyPad.ReadOut.value) / 100) * parseFloat(Accumulate);
+function Decimal(){
+  ensureFresh();
+  var info = lastNumberInfo();
+  if(!info){
+    if(/[\d\)pi]$/.test(G_Expr)===false && G_Expr!==""){ SciSetExpr(G_Expr+"0."); SciSetReadout("0."); return; }
+    if(G_Expr==="" ){ SciSetExpr("0."); SciSetReadout("0."); return; }
+    SciSetExpr(G_Expr+"0."); SciSetReadout("0."); return;
+  }
+  if(info.text.indexOf(".")===-1){ SciSetExpr(G_Expr+"."); SciSetReadout(info.text+"."); }
 }
+function AddToken(t){
+  ensureFresh();
+  var map = {pi:"pi", Ans:"Ans"};
+  var tok = map[t]||t;
+  if(tok==="Ans"){ tok = String(G_Ans); }
+  if(G_Expr==="" && /^[\)\+\-\*\/\^\%]/.test(tok)){
+    SciSetExpr(String(G_Ans)+tok); SciSetReadout(SciGetReadout()+tok); return;
+  }
+  SciSetExpr(G_Expr + tok);
+  SciSetReadout(G_Expr);
+}
+function Operation(Op){
+  if(Op==="="){ Evaluate(); return; }
+  ensureFresh();
+  if(G_Expr===""){
+    // seed from readout (legacy behavior: Accumulate = readout)
+    var r = SciGetReadout();
+    if(r===""||r==="Error") r="0";
+    SciSetExpr(r + Op);
+    SciSetReadout(r);
+    return;
+  }
+  // replace trailing operator (avoid "++", "+*")
+  if(/[+\-*\/\^%]$/.test(G_Expr)){
+    SciSetExpr(G_Expr.replace(/[+\-*\/\^%]+$/, Op));
+  } else {
+    SciSetExpr(G_Expr + Op);
+  }
+  SciSetReadout(G_Expr);
+}
+function SciFunc(name){
+  var eff = name;
+  if(G_Inv){
+    if(name==="sin") eff="asin";
+    else if(name==="cos") eff="acos";
+    else if(name==="tan") eff="atan";
+  }
+  var v = currentValue();
+  var res;
+  var wrap = ["sin","cos","tan","asin","acos","atan","ln","log","sqrt","cbrt","abs","pow10","expe","inv","fact"];
+  if(v!==null && (G_Expr==="" || G_JustEvaluated || /[\d\.\)]$/.test(G_Expr)===false)){
+    // no good anchor: wrap readout value directly
+  }
+  if(v!==null && (G_Expr==="" || G_JustEvaluated)){
+    res = applyUnary(eff, v);
+    if(res===null){ SciSetReadout("Error"); return; }
+    SciSetExpr(String(res)); SciSetReadout(String(res)); G_JustEvaluated=true; G_Ans=res; syncUrl(); return;
+  }
+  // Otherwise append function call operating on last number or parenthesized group
+  ensureFresh();
+  if(eff==="inv"){ // reciprocal: wrap last number as (1/(n))
+    var info=lastNumberInfo();
+    if(info){ var before=G_Expr.slice(0,info.index); SciSetExpr(before+"(1/("+info.text+"))"); SciSetReadout(G_Expr); return; }
+    SciSetExpr(G_Expr+"(1/("); SciSetReadout(G_Expr); return;
+  }
+  if(eff==="fact"){
+    var info2=lastNumberInfo();
+    if(info2){ SciSetExpr(G_Expr+"!"); SciSetReadout(G_Expr); return; }
+    SciSetExpr(G_Expr+"fact("); SciSetReadout(G_Expr); return;
+  }
+  if(eff==="pow10"){ SciSetExpr(G_Expr+"pow10("); SciSetReadout(G_Expr); return; }
+  if(eff==="expe"){ SciSetExpr(G_Expr+"expe("); SciSetReadout(G_Expr); return; }
+  SciSetExpr(G_Expr + eff + "(");
+  SciSetReadout(G_Expr);
+}
+function SciSquare(){
+  ensureFresh();
+  var info=lastNumberInfo();
+  if(info){ var before=G_Expr.slice(0,info.index); SciSetExpr(before+"(("+info.text+")^2)"); SciSetReadout(G_Expr); return; }
+  SciSetExpr(G_Expr+"^2"); SciSetReadout(G_Expr);
+}
+function currentValue(){
+  var r = parseFloat(SciGetReadout());
+  if(isNaN(r)){
+    var m = G_Expr.match(/(-?\d+\.?\d*(?:E-?\d+)?)$/);
+    if(m) r = parseFloat(m[1]);
+  }
+  return isNaN(r)?null:r;
+}
+function toRad(x){ return G_AngleMode==="deg" ? x*Math.PI/180 : x; }
+function toDeg(x){ return G_AngleMode==="deg" ? x*180/Math.PI : x; }
+function applyUnary(fn,x){
+  try{
+    switch(fn){
+      case "sin": return trimNum(Math.sin(toRad(x)));
+      case "cos": return trimNum(Math.cos(toRad(x)));
+      case "tan": { var c=Math.cos(toRad(x)); if(Math.abs(c)<1e-12) return null; return trimNum(Math.tan(toRad(x))); }
+      case "asin": if(x<-1||x>1) return null; return trimNum(toDeg(Math.asin(x)));
+      case "acos": if(x<-1||x>1) return null; return trimNum(toDeg(Math.acos(x)));
+      case "atan": return trimNum(toDeg(Math.atan(x)));
+      case "ln": if(x<=0) return null; return trimNum(Math.log(x));
+      case "log": if(x<=0) return null; return trimNum(Math.log10?Math.log10(x):Math.log(x)/Math.LN10);
+      case "sqrt": if(x<0) return null; return trimNum(Math.sqrt(x));
+      case "cbrt": return trimNum(Math.cbrt?Math.cbrt(x):Math.pow(x,1/3));
+      case "abs": return trimNum(Math.abs(x));
+      case "pow10": return trimNum(Math.pow(10,x));
+      case "expe": return trimNum(Math.exp(x));
+      case "inv": if(x===0) return null; return trimNum(1/x);
+      case "fact": return factorial(x);
+    }
+  }catch(e){ return null; }
+  return null;
+}
+function trimNum(n){
+  if(!isFinite(n)) return null;
+  var r = parseFloat(n.toPrecision(12));
+  return r;
+}
+function factorial(x){
+  if(x<0) return null;
+  if(Math.abs(x-Math.round(x))<1e-9){
+    var n=Math.round(x);
+    if(n>170) return null;
+    var f=1; for(var i=2;i<=n;i++) f*=i; return f;
+  }
+  // Lanczos gamma for non-integers: n! = Gamma(n+1)
+  return trimNum(gamma(x+1));
+}
+function gamma(z){
+  var p=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(z<0.5) return Math.PI/(Math.sin(Math.PI*z)*gamma(1-z));
+  z-=1; var x=p[0];
+  for(var i=1;i<9;i++) x+=p[i]/(z+i);
+  var t=z+7.5;
+  return Math.sqrt(2*Math.PI)*Math.pow(t,z+0.5)*Math.exp(-t)*x;
+}
+// ---- expression parser (shunting-yard) ----
+function tokenize(s){
+  var tokens=[], i=0;
+  var funcs=["asin","acos","atan","pow10","expe","fact","sin","cos","tan","sqrt","cbrt","log","ln","abs","mod","pi","Ans","E"];
+  while(i<s.length){
+    var ch=s[i];
+    if(ch===" "){i++;continue;}
+    if(/[0-9\.]/.test(ch)){
+      var num="", j=i;
+      while(j<s.length && /[0-9\.]/.test(s[j])){num+=s[j];j++;}
+      if(j<s.length&&(s[j]==="E"||s[j]==="e")&&/[0-9\+\-]/.test(s[j+1]||"")){
+        num+=s[j];j++;
+        if(s[j]==="+"||s[j]==="-"){num+=s[j];j++;}
+        while(j<s.length&&/[0-9]/.test(s[j])){num+=s[j];j++;}
+      }
+      if((num.match(/\./g)||[]).length>1) throw "num";
+      tokens.push({t:"num",v:parseFloat(num)}); i=j; continue;
+    }
+    if(ch==="("||ch===")"){tokens.push({t:ch});i++;continue;}
+    if("+-*/^!%".indexOf(ch)>=0){
+      // unary minus detection
+      if(ch==="-"&&(tokens.length===0||tokens[tokens.length-1].t==="op"||tokens[tokens.length-1].t==="(")){
+        // parse as part of number if followed by digit
+        var k=i+1;
+        if(k<s.length&&/[0-9\.]/.test(s[k])){
+          var n2="-"; 
+          while(k<s.length&&/[0-9\.]/.test(s[k])){n2+=s[k];k++;}
+          tokens.push({t:"num",v:parseFloat(n2)}); i=k; continue;
+        }
+        tokens.push({t:"num",v:0}); tokens.push({t:"op",v:"-"});
+        i++; continue;
+      }
+      if(ch==="+"){
+        if(tokens.length===0||tokens[tokens.length-1].t==="op"||tokens[tokens.length-1].t==="("){i++;continue;}
+      }
+      tokens.push({t:"op",v:ch}); i++; continue;
+    }
+    var matched=null;
+    for(var f=0;f<funcs.length;f++){
+      var name=funcs[f];
+      if(s.substr(i,name.length)===name){matched=name;break;}
+    }
+    if(matched){
+      if(matched==="pi") tokens.push({t:"num",v:Math.PI});
+      else if(matched==="mod") tokens.push({t:"op",v:"mod"});
+      else if(matched==="Ans") tokens.push({t:"num",v:G_Ans});
+      else if(matched==="E"&&(i===0||!/[\d\)]/.test(s[i-1]))){ /* scientific E handled in numbers; lone E -> *10^ */ tokens.push({t:"op",v:"E"}); }
+      else tokens.push({t:"fn",v:matched});
+      i+=matched.length; continue;
+    }
+    if(ch==="e"||ch==="E"){
+      // constant e (avoid clashing with 1E3 which is consumed above)
+      tokens.push({t:"num",v:Math.E}); i++; continue;
+    }
+    throw "tok:"+ch;
+  }
+  return tokens;
+}
+function evaluateTokens(tokens){
+  var out=[], ops=[];
+  var prec={"+":2,"-":2,"*":3,"/":3,"mod":3,"%":4,"^":5,"E":5,"!":6,"u-":6};
+  var right={"^":1};
+  function applyOp(){
+    var o=ops.pop();
+    if(o.t==="fn"){
+      var a=out.pop(); if(a===undefined) throw "arg";
+      var r=applyUnary(o.v==="log"?"log":o.v, a);
+      if(r===null||r===undefined) throw "fn";
+      out.push(r); return;
+    }
+    if(o.t==="op"){
+      if(o.v==="!"){ var v=out.pop(); var f=factorial(v); if(f===null) throw "fact"; out.push(f); return; }
+      if(o.v==="%"){ var p=out.pop(); out.push(p/100); return; }
+      var b=out.pop(), a2=out.pop(); if(a2===undefined||b===undefined) throw "op";
+      var r2;
+      if(o.v==="+")r2=a2+b; else if(o.v==="-")r2=a2-b;
+      else if(o.v==="*")r2=a2*b; else if(o.v==="/"){ if(b===0) throw "div0"; r2=a2/b; }
+      else if(o.v==="^")r2=Math.pow(a2,b);
+      else if(o.v==="mod"){ if(b===0) throw "div0"; r2=a2%b; }
+      else if(o.v==="E")r2=a2*Math.pow(10,b);
+      else throw "op";
+      if(!isFinite(r2)) throw "range";
+      out.push(r2); return;
+    }
+    throw "stack";
+  }
+  for(var i=0;i<tokens.length;i++){
+    var tk=tokens[i];
+    if(tk.t==="num") out.push(tk.v);
+    else if(tk.t==="fn") ops.push(tk);
+    else if(tk.t==="(") ops.push(tk);
+    else if(tk.t===")"){ while(ops.length&&ops[ops.length-1].t!=="(") applyOp(); if(!ops.length) throw "paren"; ops.pop(); if(ops.length&&ops[ops.length-1].t==="fn") applyOp(); }
+    else if(tk.t==="op"){
+      var o1=tk.v;
+      if(o1==="mod") tk={t:"op",v:"mod"};
+      while(ops.length&&(ops[ops.length-1].t==="op"||ops[ops.length-1].t==="fn")){
+        var top=ops[ops.length-1];
+        var pTop=top.t==="fn"?7:(prec[top.v]||0);
+        var pCur=prec[o1]||0;
+        if(pTop>pCur||(pTop===pCur&&!right[o1])) applyOp(); else break;
+      }
+      ops.push({t:"op",v:o1});
+    }
+  }
+  while(ops.length){ if(ops[ops.length-1].t==="(") throw "paren"; applyOp(); }
+  if(out.length!==1) throw "expr";
+  return out[0];
+}
+function Evaluate(){
+  var expr = G_Expr==="" ? SciGetReadout() : G_Expr;
+  if(!expr) return;
+  try{
+    var toks = tokenize(String(expr).replace(/\u03C0/g,"pi").replace(/\u00D7/g,"*"));
+    var val = evaluateTokens(toks);
+    val = trimNum(val);
+    if(val===null||val===undefined||!isFinite(val)) throw "r";
+    SciSetReadout(String(val));
+    try{ FKeyPad.Expr.value = prettyExpr(expr)+" ="; }catch(e){}
+    G_Expr = String(val);
+    G_JustEvaluated = true;
+    G_Ans = val;
+    syncUrl();
+  }catch(e){ SciSetReadout("Error"); G_JustEvaluated=true; }
+}
+function Backspace(){
+  if(G_JustEvaluated){ ClearEntry(); return; }
+  if(G_Expr.length>0){ SciSetExpr(G_Expr.slice(0,-1)); SciSetReadout(G_Expr===""?"0":G_Expr); }
+  else { var r=SciGetReadout(); if(r.length>1&&r!=="Error") SciSetReadout(r.slice(0,-1)); else SciSetReadout("0"); }
+}
+function ClearEntry(){
+  // clear current entry: drop trailing number from expression
+  var info=lastNumberInfo();
+  if(info && !G_JustEvaluated){ SciSetExpr(G_Expr.slice(0,info.index)); SciSetReadout("0"); }
+  else { SciSetReadout("0"); if(G_JustEvaluated){SciSetExpr("");G_JustEvaluated=false;} }
+}
+function Clear(){
+  SciSetExpr(""); SciSetReadout("0"); G_JustEvaluated=false;
+}
+function Neg(){
+  var info=lastNumberInfo();
+  if(info && !G_JustEvaluated){
+    var before=G_Expr.slice(0,info.index);
+    var n=info.text[0]==="-"?info.text.slice(1):"-"+info.text;
+    SciSetExpr(before+n); SciSetReadout(n); return;
+  }
+  var r=parseFloat(SciGetReadout());
+  if(!isNaN(r)){ var nv=trimNum(r*-1); SciSetReadout(String(nv)); if(G_JustEvaluated||G_Expr==="") SciSetExpr(String(nv)); }
+}
+function Percent(){
+  // legacy-compatible: (entry/100)*base when expression has an operator, else entry/100
+  var info=lastNumberInfo();
+  var cur=parseFloat(info?info.text:SciGetReadout());
+  if(isNaN(cur)) return;
+  var baseExpr = info?G_Expr.slice(0,info.index):"";
+  var hasOp = /[+\-*\/^]/.test(baseExpr);
+  var res = hasOp ? (function(){ try{ var b=evaluateTokens(tokenize(baseExpr.replace(/[*\/^+\-]+$/,""))); return trimNum(b*cur/100);}catch(e){return trimNum(cur/100);} })() : trimNum(cur/100);
+  if(info) { SciSetExpr(baseExpr+String(res)); SciSetReadout(String(res)); }
+  else { SciSetReadout(String(res)); SciSetExpr(String(res)); }
+}
+function MemClear(){G_Mem=0;memFlag();}
+function MemRecall(){ensureFresh();SciSetExpr(G_Expr+String(G_Mem));SciSetReadout(G_Expr);}
+function MemStore(){var v=currentValue();if(v!==null){G_Mem=v;memFlag();}}
+function MemAdd(){var v=currentValue();if(v!==null){G_Mem+=v;memFlag();}}
+function MemSub(){var v=currentValue();if(v!==null){G_Mem-=v;memFlag();}}
+function memFlag(){try{document.getElementById("sciMemFlag").textContent="M: "+String(trimNum(G_Mem));}catch(e){}}
+function setAngleMode(m){
+  G_AngleMode=m;
+  try{
+    document.getElementById("btnDeg").className="sciModeBtn"+(m==="deg"?" active":"");
+    document.getElementById("btnRad").className="sciModeBtn"+(m==="rad"?" active":"");
+  }catch(e){}
+}
+function toggleInv(){
+  G_Inv=!G_Inv;
+  try{
+    document.getElementById("btnInv").className="sciModeBtn"+(G_Inv?" active":"");
+    document.getElementById("bSin").value=G_Inv?"sin\u207B\u00B9":"sin";
+    document.getElementById("bCos").value=G_Inv?"cos\u207B\u00B9":"cos";
+    document.getElementById("bTan").value=G_Inv?"tan\u207B\u00B9":"tan";
+  }catch(e){}
+}
+function toggleSciPad(){
+  G_SciVisible=!G_SciVisible;
+  try{
+    var els=document.querySelectorAll('#sciGrid [data-sci="1"]');
+    for(var i=0;i<els.length;i++) els[i].style.display=G_SciVisible?"":"none";
+    document.getElementById("sciGrid").style.gridTemplateColumns=G_SciVisible?"repeat(6,1fr)":"repeat(3,1fr)";
+    document.getElementById("btnBasicSci").textContent=G_SciVisible?"Hide Sci":"Show Sci";
+  }catch(e){}
+}
+// keyboard support (ignored while typing in scratchpad notes)
+document.addEventListener("keydown",function(e){
+  try{
+    var t=e.target, tag=(t&&t.tagName||"").toLowerCase();
+    if(tag==="textarea") return;
+    if(t&&t.id==="TextArea1") return;
+    var k=e.key;
+    if(/^[0-9]$/.test(k)){NumPressed(parseInt(k,10));e.preventDefault();}
+    else if(k==="."){Decimal();e.preventDefault();}
+    else if(k==="+"||k==="-"||k==="*"||k==="/"){Operation(k);e.preventDefault();}
+    else if(k==="^"){AddToken("^");e.preventDefault();}
+    else if(k==="("||k===")"){AddToken(k);e.preventDefault();}
+    else if(k==="Enter"||k==="="){Evaluate();e.preventDefault();}
+    else if(k==="Backspace"){ if(document.activeElement&&document.activeElement.name==="ReadOut"){/*let native*/ setTimeout(syncExprFromBox,0);} else {Backspace();e.preventDefault();} }
+    else if(k==="Escape"){Clear();e.preventDefault();}
+    else if(k==="%"){Percent();e.preventDefault();}
+    else if(k==="!" ){SciFunc("fact");e.preventDefault();}
+  }catch(err){}
+});
+function syncExprFromBox(){
+  try{ var v=FKeyPad.ReadOut.value; if(v&&v!=="Error"){G_Expr=v;G_JustEvaluated=false;try{FKeyPad.Expr.value="";}catch(e){} syncUrl();} }catch(e){}
+}
+if(FKeyPad.ReadOut){ FKeyPad.ReadOut.addEventListener("change",syncExprFromBox); }
+// seed from ?ReadOut= for shared links
+(function(){
+  try{
+    var u=new URL(window.location.href);
+    var r=u.searchParams.get("ReadOut");
+    if(r!==null&&r!==""){ FKeyPad.ReadOut.value=r; G_Expr=r; try{FKeyPad.Expr.value="";}catch(e){} }
+  }catch(e){}
+})();
 </script>
+
 
 <!-- ===== Embedded clicker drawer (closed by default, G toggles, grey side tab) ===== -->
 <div id="gg-drawer" aria-hidden="true">
