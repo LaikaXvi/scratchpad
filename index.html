@@ -611,23 +611,24 @@ if(FKeyPad.ReadOut){ FKeyPad.ReadOut.addEventListener("change",syncExprFromBox);
         <label style="display:block;margin-top:6px;font-size:12px;"><input type="checkbox" id="gg-autosave" checked="checked" /> Autosave every 15s</label>
         <div id="gg-save-note"></div>
         <div style="margin-top:10px;border-top:1px solid #333;padding-top:8px;">
-          <div style="font-weight:bold;color:#ffe27a;">Discord <span style="font-weight:normal;color:#888;font-size:11px;">(live server widget)</span></div>
+          <div style="font-weight:bold;color:#ffe27a;">IRC Chat <span style="font-weight:normal;color:#888;font-size:11px;">(Libera.Chat — no login required)</span></div>
           <div class="gg-row" style="margin-top:6px;">
-            <label style="font-size:12px;">Server ID <input id="gg-discord-id" placeholder="e.g. 123456789012345678" style="width:150px;background:#111;color:#eee;border:1px solid #555;border-radius:4px;padding:3px 6px;" /></label>
-            <button class="gg-btn" id="gg-discord-toggle">Connect</button>
-          </div>
-          <div class="gg-row" style="margin-top:6px;">
-            <label style="font-size:12px;">Invite <input id="gg-discord-invite" placeholder="https://discord.gg/..." style="width:150px;background:#111;color:#eee;border:1px solid #555;border-radius:4px;padding:3px 6px;" /></label>
-          </div>
-          <div id="gg-discord-status" style="font-size:12px;margin-top:6px;color:#888;">offline</div>
-          <div id="gg-discord-holder" style="margin-top:6px;background:#101016;border:1px solid #333;border-radius:6px;overflow:hidden;">
-            <div id="gg-discord-placeholder" style="padding:12px;font-size:12px;color:#888;">Enter your <b>Server ID</b> and press <b>Connect</b> to show the Discord server widget in this panel.</div>
-            <iframe id="gg-discord-frame" title="Discord server widget" style="display:none;width:100%;height:420px;border:0;background:#313338;" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" allow="clipboard-read; clipboard-write"></iframe>
+            <label style="font-size:12px;">Username <input id="gg-nick" maxlength="16" style="width:110px;background:#111;color:#eee;border:1px solid #555;border-radius:4px;padding:3px 6px;" /></label>
+            <button class="gg-btn" id="gg-nick-rand" title="Random username">&#127922;</button>
           </div>
           <div class="gg-row" style="margin-top:6px;">
-            <a id="gg-discord-open" href="#" target="_blank" rel="noopener" style="font-size:12px;color:#8fd;display:none;">Open in Discord &#8599;</a>
+            <label style="font-size:12px;">Channel <input id="gg-channel" value="#scratchpad-drawer" style="width:130px;background:#111;color:#eee;border:1px solid #555;border-radius:4px;padding:3px 6px;" /></label>
+            <button class="gg-btn" id="gg-irc-toggle">Connect</button>
           </div>
-          <div style="font-size:11px;color:#888;margin-top:4px;">Enable the widget in Discord: <b>Server Settings &gt; Widget &gt; Enable Server Widget</b>, then paste the Server ID above.</div>
+          <div id="gg-irc-status" style="font-size:12px;margin-top:6px;color:#888;">offline</div>
+          <div id="gg-irc-holder" style="margin-top:6px;background:#101016;border:1px solid #333;border-radius:6px;overflow:hidden;">
+            <div id="gg-irc-placeholder" style="padding:12px;font-size:12px;color:#888;">Press <b>Connect</b> to join <b>#scratchpad-drawer</b> via Libera.Chat in this panel. Works for everyone — no account or gateway needed.</div>
+            <iframe id="gg-irc-frame" title="Libera.Chat webchat" style="display:none;width:100%;height:420px;border:0;background:#fff;" allow="clipboard-read; clipboard-write"></iframe>
+          </div>
+          <div class="gg-row" style="margin-top:6px;">
+            <a id="gg-irc-open" href="https://web.libera.chat/#scratchpad-drawer" target="_blank" rel="noopener" style="font-size:12px;color:#8fd;">Open in new tab &#8599;</a>
+          </div>
+          <div style="font-size:11px;color:#888;margin-top:4px;">Same channel also reachable at <b>web.libera.chat</b> or any IRC app at <b>irc.libera.chat:6697 (TLS)</b>.</div>
         </div>
       </div>
       <div id="gg-pane-ach" style="display:none;margin-top:8px;"><div id="gg-ach-list"></div></div>
@@ -779,53 +780,58 @@ if(FKeyPad.ReadOut){ FKeyPad.ReadOut.addEventListener("change",syncExprFromBox);
   document.getElementById('gg-tab-settings').onclick=function(){var p=document.getElementById('gg-pane-settings');showPane(p.style.display==='block'?'game':'settings');};
   document.getElementById('gg-tab-ach').onclick=function(){var p=document.getElementById('gg-pane-ach');showPane(p.style.display==='block'?'game':'ach');};
   document.getElementById('gg-tab-game').onclick=function(){document.getElementById('gg-pane-settings').style.display='none';document.getElementById('gg-pane-ach').style.display='none';};
-  /* ---- Discord server widget embed ---- */
-  var DISCORD_KEY='gg_discord';
-  var discordPrefs={serverId:'',invite:''};
-  try{var _dp=JSON.parse(localStorage.getItem(DISCORD_KEY)||'null');if(_dp)discordPrefs=Object.assign(discordPrefs,_dp);}catch(e){}
-  function discordEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-  function discordSave(){try{localStorage.setItem(DISCORD_KEY,JSON.stringify({serverId:document.getElementById('gg-discord-id').value.trim(),invite:document.getElementById('gg-discord-invite').value.trim()}));}catch(e){}}
-  function discordStatus(txt,color){var el=document.getElementById('gg-discord-status');if(!el)return;el.innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+color+';margin-right:4px;"></span>'+discordEsc(txt);}
-  function discordEmbedUrl(serverId){
-    return 'https://discord.com/widget?id='+encodeURIComponent(serverId)+'&theme=dark';
+  /* ---- IRC chat (public Libera.Chat webchat embed — works for all GitHub Pages visitors) ---- */
+  var IRC_KEY='gg_irc';
+  var ircPrefs={nick:'Guest'+Math.floor(1000+Math.random()*9000),channel:'#scratchpad-drawer'};
+  try{var _ip=JSON.parse(localStorage.getItem(IRC_KEY)||'null');if(_ip)ircPrefs=Object.assign(ircPrefs,_ip);}catch(e){}
+  function ircEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function ircSave(){try{localStorage.setItem(IRC_KEY,JSON.stringify({nick:document.getElementById('gg-nick').value,channel:document.getElementById('gg-channel').value}));}catch(e){}}
+  function ircStatus(txt,color){var el=document.getElementById('gg-irc-status');if(!el)return;el.innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+color+';margin-right:4px;"></span>'+ircEsc(txt);}
+  function ircNormChannel(ch){ch=(ch||'').trim()||'#scratchpad-drawer';if(ch.charAt(0)!=='#')ch='#'+ch;return ch.slice(0,50);}
+  function ircNormNick(n){n=(n||'').trim().replace(/\s+/g,'_').slice(0,16)||ircPrefs.nick;return n;}
+  function ircEmbedUrl(nick,channel){
+    var chan=ircNormChannel(channel).replace(/^#/,'');
+    return 'https://web.libera.chat/?nick='+encodeURIComponent(nick)+'#'+encodeURIComponent(chan);
   }
-  function discordIsConnected(){var f=document.getElementById('gg-discord-frame');return f&&f.style.display!=='none'&&!!f.src&&f.src!=='about:blank';}
-  function discordSyncOpenLink(){
-    var o=document.getElementById('gg-discord-open');
-    if(!o)return;
-    var inv=(document.getElementById('gg-discord-invite').value||'').trim();
-    if(inv){o.href=inv;o.style.display='inline';}
-    else{var sid=(document.getElementById('gg-discord-id').value||'').trim();o.href=sid?('https://discord.com/channels/'+encodeURIComponent(sid)):'#';o.style.display=sid?'inline':'none';}
-  }
-  function discordDisconnect(){
-    var frame=document.getElementById('gg-discord-frame');
-    var ph=document.getElementById('gg-discord-placeholder');
+  function ircIsConnected(){var f=document.getElementById('gg-irc-frame');return f&&f.style.display!=='none'&&!!f.src;}
+  function ircDisconnect(){
+    var frame=document.getElementById('gg-irc-frame');
+    var ph=document.getElementById('gg-irc-placeholder');
     if(frame){try{frame.src='about:blank';}catch(e){}frame.style.display='none';}
     if(ph)ph.style.display='block';
-    discordStatus('offline','#666');
-    var t=document.getElementById('gg-discord-toggle');if(t)t.textContent='Connect';
+    ircStatus('offline','#666');
+    var t=document.getElementById('gg-irc-toggle');if(t)t.textContent='Connect';
   }
-  function discordConnect(){
-    if(discordIsConnected()){discordDisconnect();return;}
-    var sid=(document.getElementById('gg-discord-id').value||'').trim();
-    if(!/^[0-9]{6,25}$/.test(sid)){discordStatus('enter a valid numeric Server ID','#a55');return;}
-    discordSave();
-    var url=discordEmbedUrl(sid);
-    var frame=document.getElementById('gg-discord-frame');
-    var ph=document.getElementById('gg-discord-placeholder');
+  function ircConnect(){
+    if(ircIsConnected()){ircDisconnect();return;}
+    var nick=ircNormNick(document.getElementById('gg-nick').value);
+    var ch=ircNormChannel(document.getElementById('gg-channel').value);
+    document.getElementById('gg-nick').value=nick;
+    document.getElementById('gg-channel').value=ch;
+    ircSave();
+    var url=ircEmbedUrl(nick,ch);
+    var frame=document.getElementById('gg-irc-frame');
+    var ph=document.getElementById('gg-irc-placeholder');
+    var open=document.getElementById('gg-irc-open');
+    if(open)open.href=url;
     if(ph)ph.style.display='none';
     if(frame){frame.style.display='block';frame.src=url;}
-    document.getElementById('gg-discord-toggle').textContent='Disconnect';
-    discordStatus('online — '+sid,'#4c4');
-    discordSyncOpenLink();
+    document.getElementById('gg-irc-toggle').textContent='Disconnect';
+    ircStatus('online — '+ch,'#4c4');
   }
-  document.getElementById('gg-discord-id').value=discordPrefs.serverId||'';
-  document.getElementById('gg-discord-invite').value=discordPrefs.invite||'';
-  discordSyncOpenLink();
-  document.getElementById('gg-discord-toggle').addEventListener('click',discordConnect);
-  document.getElementById('gg-discord-id').addEventListener('change',function(){discordSave();discordSyncOpenLink();});
-  document.getElementById('gg-discord-invite').addEventListener('change',function(){discordSave();discordSyncOpenLink();});
-  discordStatus('offline','#666');
+  document.getElementById('gg-nick').value=ircPrefs.nick;
+  document.getElementById('gg-channel').value=ircPrefs.channel||'#scratchpad-drawer';
+  (function(){var o=document.getElementById('gg-irc-open');if(o)o.href=ircEmbedUrl(ircPrefs.nick,ircPrefs.channel||'#scratchpad-drawer');})();
+  document.getElementById('gg-irc-toggle').addEventListener('click',ircConnect);
+  document.getElementById('gg-nick-rand').addEventListener('click',function(){
+    var nn='Guest'+Math.floor(1000+Math.random()*9000);
+    document.getElementById('gg-nick').value=nn;ircSave();
+    if(ircIsConnected()){ircDisconnect();ircConnect();}
+    else{var o=document.getElementById('gg-irc-open');if(o)o.href=ircEmbedUrl(nn,document.getElementById('gg-channel').value);}
+  });
+  document.getElementById('gg-nick').addEventListener('change',ircSave);
+  document.getElementById('gg-channel').addEventListener('change',function(){ircSave();var o=document.getElementById('gg-irc-open');if(o&&!ircIsConnected())o.href=ircEmbedUrl(document.getElementById('gg-nick').value,document.getElementById('gg-channel').value);});
+  ircStatus('offline','#666');
 
   render();
 })();
